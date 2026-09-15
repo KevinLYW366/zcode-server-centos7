@@ -39,6 +39,17 @@ The release archive includes the compatibility runtime, so release users do
 not need to build or download glibc, libstdc++, or patchelf separately. Root
 access is not required. Reconnect Zcode after installation.
 
+## Tested compatibility
+
+The following combinations have been verified with a manual end-to-end
+remote connection test:
+
+| Zcode client | Client OS | Remote OS | Architecture | Result |
+|---|---|---|---|---|
+| 3.11.2 | Windows | CentOS 7 | x86-64 | Remote connection successful |
+
+Other Zcode versions may also work, but have not yet been verified.
+
 ## Problem
 
 CentOS 7 normally provides glibc 2.17 and the GCC 4.8 C++ runtime. Recent Zcode
