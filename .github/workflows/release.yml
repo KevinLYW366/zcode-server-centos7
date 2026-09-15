@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check release version
+        run: |
+          cli_version=$(bin/zcode-centos7 --version | awk '{print $2}')
+          test "v${cli_version}" = "${GITHUB_REF_NAME}"
+
+      - name: Run checks
+        run: |
+          make lint
+          make test
+          shellcheck bin/zcode-centos7 scripts/*.sh tests/*.sh
+
+      - name: Download verified runtime source
+        run: |
+          curl -fL \
+            https://github.com/MikeWang000000/vscode-server-centos7/releases/download/1.137.0/vscode-server_1.137.0_x64.tar.gz \
+            -o "${RUNNER_TEMP}/vscode-server_1.137.0_x64.tar.gz"
+
+      - name: Build release bundle
+        run: |
+          make runtime VSCODE_ARCHIVE="${RUNNER_TEMP}/vscode-server_1.137.0_x64.tar.gz"
+          make release
+          cd dist
+          sha256sum -c zcode-server-centos7-*-x86_64.tar.gz.sha256
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
+            gh release create "${GITHUB_REF_NAME}" --generate-notes --verify-tag
+          gh release upload "${GITHUB_REF_NAME}" \
+            dist/zcode-server-centos7-*-x86_64.tar.gz \
+            dist/zcode-server-centos7-*-x86_64.tar.gz.sha256 \
+            --clobber

@@ -1,0 +1,371 @@
+#!/usr/bin/env bash
+
+# Patch only the Zcode-managed Node.js to use a private compatibility runtime.
+
+set -euo pipefail
+
+readonly PROGRAM_NAME="zcode-centos7"
+readonly PROGRAM_VERSION="0.1.0"
+
+ZCODE_ROOT="${HOME}/.zcode"
+RUNTIME_SOURCE=""
+HANDSHAKE_TEST=0
+COMMAND=""
+LOCK_HELD=0
+TEMP_PATH=""
+
+log() { printf '%s: %s\n' "${PROGRAM_NAME}" "$*" >&2; }
+die() { log "ERROR: $*"; exit 1; }
+
+usage() {
+    cat <<'EOF'
+Usage: zcode-centos7 [options] <command>
+
+Commands: inspect, install, status, verify, repair, uninstall
+
+Options:
+  --zcode-root PATH    Zcode root (default: $HOME/.zcode)
+  --runtime-dir PATH   Unpacked compatibility runtime
+  --handshake          Run the opt-in handshake check during verify
+  -h, --help           Show help
+  -V, --version        Show version
+EOF
+}
+
+cleanup() {
+    local rc=$?
+    [[ -z "${TEMP_PATH}" || ! -e "${TEMP_PATH}" ]] || rm -rf -- "${TEMP_PATH}"
+    if (( LOCK_HELD )) && [[ -d "${LOCK_DIR:-}" ]]; then
+        rm -rf -- "${LOCK_DIR}"
+    fi
+    exit "${rc}"
+}
+trap cleanup EXIT INT TERM
+
+require_command() {
+    command -v "$1" >/dev/null 2>&1 || die "Required command not found: $1"
+}
+
+parse_arguments() {
+    while (($#)); do
+        case "$1" in
+            --zcode-root)
+                (($# > 1)) || die "--zcode-root requires a path"
+                ZCODE_ROOT=$2; shift 2 ;;
+            --runtime-dir)
+                (($# > 1)) || die "--runtime-dir requires a path"
+                RUNTIME_SOURCE=$2; shift 2 ;;
+            --handshake) HANDSHAKE_TEST=1; shift ;;
+            -h|--help) usage; exit 0 ;;
+            -V|--version) printf '%s %s\n' "${PROGRAM_NAME}" "${PROGRAM_VERSION}"; exit 0 ;;
+            inspect|install|status|verify|repair|uninstall)
+                [[ -z "${COMMAND}" ]] || die "Only one command may be specified"
+                COMMAND=$1; shift ;;
+            *) die "Unknown argument: $1" ;;
+        esac
+    done
+    [[ -n "${COMMAND}" ]] || { usage >&2; exit 2; }
+}
+
+initialize_paths() {
+    [[ -n "${ZCODE_ROOT}" && "${ZCODE_ROOT}" != *$'\n'* && "${ZCODE_ROOT}" != *$'\r'* ]] || \
+        die "Unsafe Zcode root"
+    [[ "${ZCODE_ROOT}" != *'"'* && "${ZCODE_ROOT}" != *'\\'* ]] || \
+        die "Quotes and backslashes are not supported in the Zcode root"
+
+    if [[ -d "${ZCODE_ROOT}" ]]; then
+        ZCODE_ROOT=$(readlink -f -- "${ZCODE_ROOT}")
+    else
+        ZCODE_ROOT=$(readlink -m -- "${ZCODE_ROOT}")
+    fi
+    [[ "${ZCODE_ROOT}" = /* && "${ZCODE_ROOT}" != / ]] || die "Unsafe Zcode root"
+
+    SERVER_DIR="${ZCODE_ROOT}/server"
+    NODE_PATH="${SERVER_DIR}/node"
+    RUNTIME_ROOT="${ZCODE_ROOT}/centos7-runtime"
+    RELEASES_DIR="${RUNTIME_ROOT}/releases"
+    BACKUPS_DIR="${RUNTIME_ROOT}/backups"
+    STATE_PATH="${RUNTIME_ROOT}/state.json"
+    LOCK_DIR="${RUNTIME_ROOT}/.lock"
+}
+
+validate_node() {
+    local machine
+    [[ -f "${NODE_PATH}" && ! -L "${NODE_PATH}" && -x "${NODE_PATH}" ]] || \
+        die "Zcode Node.js must be an executable regular file: ${NODE_PATH}"
+    readelf -h "${NODE_PATH}" >/dev/null 2>&1 || die "Target is not an ELF file: ${NODE_PATH}"
+    machine=$(readelf -h "${NODE_PATH}" | awk -F: '/Machine:/{sub(/^[[:space:]]+/, "", $2); print $2; exit}')
+    [[ "${machine}" == "Advanced Micro Devices X86-64" ]] || \
+        die "Unsupported Node.js architecture: ${machine:-unknown}"
+}
+
+elf_interpreter() {
+    readelf -l "$1" | sed -n 's/.*Requesting program interpreter: \(.*\)]/\1/p' | head -n 1
+}
+
+elf_rpath() {
+    readelf -d "$1" 2>/dev/null | \
+        sed -n 's/.*\(RPATH\|RUNPATH\).*Library rpath: \[\(.*\)\]/\2/p' | head -n 1
+}
+
+sha256_file() { sha256sum "$1" | awk '{print $1}'; }
+
+# The state parser reads only simple string fields written by this program.
+state_get() {
+    local key=$1
+    [[ -f "${STATE_PATH}" ]] || return 1
+    sed -n "s/^[[:space:]]*\"${key}\": \"\([^\"]*\)\"[,]*$/\\1/p" "${STATE_PATH}" | head -n 1
+}
+
+json_escape() {
+    local value=$1
+    value=${value//\\/\\\\}; value=${value//\"/\\\"}
+    value=${value//$'\n'/\\n}; value=${value//$'\r'/\\r}; value=${value//$'\t'/\\t}
+    printf '%s' "${value}"
+}
+
+write_state() {
+    local status=$1 original_sha=$2 patched_sha=$3 backup=$4 original_interp=$5
+    local original_rpath=$6 patched_interp=$7 runtime_dir=$8 runtime_id=$9 node_version=${10}
+    local temp timestamp
+    timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+    temp=$(mktemp "${RUNTIME_ROOT}/.state.json.XXXXXX")
+    {
+        printf '{\n  "schema_version": 1,\n'
+        printf '  "tool_version": "%s",\n' "${PROGRAM_VERSION}"
+        printf '  "status": "%s",\n' "${status}"
+        printf '  "zcode_root": "%s",\n' "$(json_escape "${ZCODE_ROOT}")"
+        printf '  "node_path": "%s",\n' "$(json_escape "${NODE_PATH}")"
+        printf '  "node_original_sha256": "%s",\n' "${original_sha}"
+        printf '  "node_patched_sha256": "%s",\n' "${patched_sha}"
+        printf '  "backup_path": "%s",\n' "$(json_escape "${backup}")"
+        printf '  "original_interpreter": "%s",\n' "$(json_escape "${original_interp}")"
+        printf '  "original_rpath": "%s",\n' "$(json_escape "${original_rpath}")"
+        printf '  "patched_interpreter": "%s",\n' "$(json_escape "${patched_interp}")"
+        printf '  "runtime_dir": "%s",\n' "$(json_escape "${runtime_dir}")"
+        printf '  "runtime_id": "%s",\n' "${runtime_id}"
+        printf '  "zcode_node_version": "%s",\n' "$(json_escape "${node_version}")"
+        printf '  "updated_at": "%s"\n}\n' "${timestamp}"
+    } >"${temp}"
+    chmod 0644 "${temp}"
+    mv -f -- "${temp}" "${STATE_PATH}"
+}
+
+acquire_lock() {
+    mkdir -p -- "${RUNTIME_ROOT}"
+    chmod go-w -- "${RUNTIME_ROOT}"
+    mkdir -- "${LOCK_DIR}" 2>/dev/null || die "Another modifying operation may be active"
+    LOCK_HELD=1
+    printf '%s\n' "$$" >"${LOCK_DIR}/pid"
+}
+
+manifest_get() {
+    local manifest=$1 wanted=$2 key value
+    while IFS='=' read -r key value; do
+        case "${key}" in
+            RUNTIME_ID|ARCH|LOADER|LIB_DIR|PATCHELF)
+                [[ "${key}" != "${wanted}" ]] || { printf '%s\n' "${value}"; return 0; } ;;
+        esac
+    done <"${manifest}"
+    return 1
+}
+
+validate_relative_path() {
+    [[ -n "$1" && "$1" != /* && "/$1/" != *'/../'* && "$1" != *$'\n'* ]]
+}
+
+validate_runtime() {
+    local dir=$1 manifest="${1}/manifest.env" checksums="${1}/SHA256SUMS"
+    local id arch loader lib patcher file
+    [[ -d "${dir}" && ! -L "${dir}" ]] || die "Invalid runtime directory: ${dir}"
+    [[ -f "${manifest}" && -f "${checksums}" ]] || die "Runtime metadata is incomplete"
+    id=$(manifest_get "${manifest}" RUNTIME_ID) || die "Runtime ID is missing"
+    arch=$(manifest_get "${manifest}" ARCH) || die "Runtime architecture is missing"
+    loader=$(manifest_get "${manifest}" LOADER) || die "Runtime loader is missing"
+    lib=$(manifest_get "${manifest}" LIB_DIR) || die "Runtime library directory is missing"
+    patcher=$(manifest_get "${manifest}" PATCHELF) || die "Runtime patchelf is missing"
+    [[ "${id}" =~ ^[A-Za-z0-9._-]+$ && "${arch}" == x86_64 ]] || die "Unsupported runtime"
+    validate_relative_path "${loader}" && validate_relative_path "${lib}" && \
+        validate_relative_path "${patcher}" || die "Unsafe runtime path"
+    while read -r _ file; do
+        file=${file#\*}; validate_relative_path "${file}" || die "Unsafe checksum path"
+    done <"${checksums}"
+    (cd "${dir}" && sha256sum -c SHA256SUMS >/dev/null) || die "Runtime checksum failure"
+    [[ -x "${dir}/${loader}" && -d "${dir}/${lib}" && -x "${dir}/${patcher}" ]] || \
+        die "Runtime files are incomplete"
+    printf '%s\n' "${id}"
+}
+
+install_runtime() {
+    local source id destination loader lib patcher
+    source=$(readlink -f -- "$1")
+    id=$(validate_runtime "${source}")
+    destination="${RELEASES_DIR}/${id}"
+    mkdir -p -- "${RELEASES_DIR}" "${BACKUPS_DIR}"
+    chmod go-w -- "${RELEASES_DIR}" "${BACKUPS_DIR}"
+    if [[ ! -d "${destination}" ]]; then
+        TEMP_PATH=$(mktemp -d "${RELEASES_DIR}/.${id}.XXXXXX")
+        cp -a -- "${source}/." "${TEMP_PATH}/"
+        chmod -R go-w -- "${TEMP_PATH}"
+        mv -- "${TEMP_PATH}" "${destination}"
+        TEMP_PATH=""
+    fi
+    validate_runtime "${destination}" >/dev/null
+    loader="${destination}/$(manifest_get "${destination}/manifest.env" LOADER)"
+    lib="${destination}/$(manifest_get "${destination}/manifest.env" LIB_DIR)"
+    patcher="${destination}/$(manifest_get "${destination}/manifest.env" PATCHELF)"
+    printf '%s\t%s\t%s\t%s\n' "${destination}" "${loader}" "${lib}" "${patcher}"
+}
+
+run_patchelf() {
+    local loader=$1 lib=$2 patcher=$3
+    shift 3
+    "${loader}" --library-path "${lib}" "${patcher}" "$@"
+}
+
+verify_node() {
+    local node=$1 runtime_dir=$2 version maps
+    version=$("${node}" --version 2>&1) || die "Patched Node.js failed: ${version}"
+    [[ "${version}" == v* ]] || die "Unexpected Node.js version output: ${version}"
+    maps=$("${node}" -e 'process.stdout.write(require("fs").readFileSync("/proc/self/maps","utf8"))')
+    [[ "${maps}" == *"${runtime_dir}"* ]] || die "Private libraries were not loaded"
+    "${node}" -e 'const c=require("child_process");if(c.execFileSync("/bin/sh",["-c","printf ok"],{encoding:"utf8"})!=="ok")process.exit(71)' || \
+        die "Node.js could not start an isolated system shell"
+    printf '%s\n' "${version}"
+}
+
+patch_node() {
+    local runtime_dir=$1 loader=$2 lib=$3 patcher=$4 interp rpath original_sha backup
+    local patched_sha node_version runtime_id
+    validate_node
+    interp=$(elf_interpreter "${NODE_PATH}")
+    [[ "${interp}" != "${RUNTIME_ROOT}"/* ]] || { log "Node.js is already patched."; return 0; }
+    [[ "${interp}" == /lib64/ld-linux-x86-64.so.2 ]] || \
+        die "Unexpected ELF interpreter: ${interp:-none}"
+    rpath=$(elf_rpath "${NODE_PATH}")
+    original_sha=$(sha256_file "${NODE_PATH}")
+    backup="${BACKUPS_DIR}/node.${original_sha}"
+    if [[ -e "${backup}" ]]; then
+        [[ -f "${backup}" && "$(sha256_file "${backup}")" == "${original_sha}" ]] || \
+            die "Existing backup checksum mismatch"
+    else
+        cp -p -- "${NODE_PATH}" "${backup}.tmp.$$"
+        [[ "$(sha256_file "${backup}.tmp.$$")" == "${original_sha}" ]] || die "Backup failed"
+        mv -- "${backup}.tmp.$$" "${backup}"
+    fi
+    TEMP_PATH=$(mktemp "${SERVER_DIR}/.node.zcode-centos7.XXXXXX")
+    cp -p -- "${NODE_PATH}" "${TEMP_PATH}"
+    run_patchelf "${loader}" "${lib}" "${patcher}" --set-interpreter "${loader}" "${TEMP_PATH}"
+    [[ "$(elf_interpreter "${TEMP_PATH}")" == "${loader}" ]] || die "Interpreter check failed"
+    node_version=$(verify_node "${TEMP_PATH}" "${runtime_dir}")
+    patched_sha=$(sha256_file "${TEMP_PATH}")
+    runtime_id=$(manifest_get "${runtime_dir}/manifest.env" RUNTIME_ID)
+    mv -f -- "${TEMP_PATH}" "${NODE_PATH}"
+    TEMP_PATH=""
+    write_state installed "${original_sha}" "${patched_sha}" "${backup}" "${interp}" \
+        "${rpath}" "${loader}" "${runtime_dir}" "${runtime_id}" "${node_version}"
+    log "Installed compatibility for ${NODE_PATH}."
+}
+
+default_runtime() {
+    local here candidate
+    here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+    candidate=$(readlink -m -- "${here}/../runtime")
+    [[ -d "${candidate}" ]] && printf '%s\n' "${candidate}"
+}
+
+inspect_command() {
+    validate_node
+    printf 'Zcode root: %s\nNode path: %s\nNode SHA256: %s\n' \
+        "${ZCODE_ROOT}" "${NODE_PATH}" "$(sha256_file "${NODE_PATH}")"
+    printf 'ELF interpreter: %s\nELF RPATH/RUNPATH: %s\nRequired ABI versions:\n' \
+        "$(elf_interpreter "${NODE_PATH}")" "$(elf_rpath "${NODE_PATH}")"
+    readelf --version-info "${NODE_PATH}" 2>/dev/null | \
+        grep -oE '(GLIBCXX|GLIBC|CXXABI)_[0-9.]+' | sort -Vu | sed 's/^/  /' || true
+}
+
+status_command() {
+    local status=not-installed interp=unknown drift=unknown current recorded
+    if [[ -f "${STATE_PATH}" ]]; then status=$(state_get status || printf unknown); fi
+    if [[ -f "${NODE_PATH}" ]] && readelf -h "${NODE_PATH}" >/dev/null 2>&1; then
+        interp=$(elf_interpreter "${NODE_PATH}"); current=$(sha256_file "${NODE_PATH}")
+        recorded=$(state_get node_patched_sha256 || true)
+        [[ -z "${recorded}" ]] || { [[ "${current}" == "${recorded}" ]] && drift=no || drift=yes; }
+    fi
+    printf 'Status: %s\nNode path: %s\nELF interpreter: %s\nState drift: %s\nState file: %s\n' \
+        "${status}" "${NODE_PATH}" "${interp:-unknown}" "${drift}" "${STATE_PATH}"
+}
+
+install_command() {
+    local source fields runtime loader lib patcher
+    validate_node; acquire_lock
+    source=${RUNTIME_SOURCE:-$(default_runtime || true)}
+    [[ -n "${source}" ]] || die "Use --runtime-dir or a release bundle"
+    fields=$(install_runtime "${source}")
+    IFS=$'\t' read -r runtime loader lib patcher <<<"${fields}"
+    patch_node "${runtime}" "${loader}" "${lib}" "${patcher}"
+}
+
+verify_command() {
+    local runtime version entry output rc=0
+    validate_node
+    runtime=$(state_get runtime_dir || true)
+    [[ -d "${runtime}" ]] || die "No installed runtime is recorded"
+    version=$(verify_node "${NODE_PATH}" "${runtime}")
+    printf 'Node version: %s\nPrivate runtime: verified\nSystem shell isolation: verified\n' "${version}"
+    if (( HANDSHAKE_TEST )); then
+        require_command timeout
+        entry="${SERVER_DIR}/zcode-server.cjs"; [[ -f "${entry}" ]] || die "Server entry not found"
+        output=$(mktemp /tmp/zcode-centos7-handshake.XXXXXX)
+        timeout 10s "${NODE_PATH}" "${entry}" >"${output}" 2>&1 || rc=$?
+        grep -q zcode-hello "${output}" || { sed -n '1,40p' "${output}" >&2; rm -f "${output}"; die "Handshake failed (${rc})"; }
+        rm -f "${output}"; printf 'Zcode handshake: verified\n'
+    fi
+}
+
+repair_command() {
+    local runtime loader lib patcher manifest fields interp
+    validate_node; interp=$(elf_interpreter "${NODE_PATH}")
+    if [[ "${interp}" == "${RUNTIME_ROOT}"/* ]]; then verify_command; return 0; fi
+    acquire_lock; runtime=$(state_get runtime_dir || true)
+    if [[ ! -d "${runtime}" ]]; then
+        [[ -n "${RUNTIME_SOURCE}" ]] || die "Provide --runtime-dir"
+        fields=$(install_runtime "${RUNTIME_SOURCE}")
+        IFS=$'\t' read -r runtime loader lib patcher <<<"${fields}"
+    else
+        validate_runtime "${runtime}" >/dev/null; manifest="${runtime}/manifest.env"
+        loader="${runtime}/$(manifest_get "${manifest}" LOADER)"
+        lib="${runtime}/$(manifest_get "${manifest}" LIB_DIR)"
+        patcher="${runtime}/$(manifest_get "${manifest}" PATCHELF)"
+    fi
+    patch_node "${runtime}" "${loader}" "${lib}" "${patcher}"
+}
+
+uninstall_command() {
+    local status patched current backup original interp rpath runtime id version
+    validate_node; [[ -f "${STATE_PATH}" ]] || die "No installation state"
+    status=$(state_get status || true); [[ "${status}" == installed ]] || die "Not installed"
+    patched=$(state_get node_patched_sha256); current=$(sha256_file "${NODE_PATH}")
+    [[ "${patched}" == "${current}" ]] || die "Current Node.js differs from saved state"
+    backup=$(state_get backup_path); original=$(state_get node_original_sha256)
+    [[ -f "${backup}" && "$(sha256_file "${backup}")" == "${original}" ]] || die "Backup is invalid"
+    acquire_lock; TEMP_PATH=$(mktemp "${SERVER_DIR}/.node.zcode-centos7.XXXXXX")
+    cp -p -- "${backup}" "${TEMP_PATH}"; [[ "$(sha256_file "${TEMP_PATH}")" == "${original}" ]] || die "Restore check failed"
+    mv -f -- "${TEMP_PATH}" "${NODE_PATH}"; TEMP_PATH=""
+    interp=$(state_get original_interpreter || true); rpath=$(state_get original_rpath || true)
+    runtime=$(state_get runtime_dir || true); id=$(state_get runtime_id || true); version=$(state_get zcode_node_version || true)
+    write_state uninstalled "${original}" "" "${backup}" "${interp}" "${rpath}" "" "${runtime}" "${id}" "${version}"
+    log "Restored the original Zcode Node.js. Backups were retained."
+}
+
+main() {
+    local command
+    for command in readlink readelf sha256sum awk sed grep sort mktemp; do require_command "${command}"; done
+    parse_arguments "$@"; initialize_paths
+    case "${COMMAND}" in
+        inspect) inspect_command ;; install) install_command ;; status) status_command ;;
+        verify) verify_command ;; repair) repair_command ;; uninstall) uninstall_command ;;
+    esac
+}
+
+main "$@"

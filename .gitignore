@@ -1,0 +1,7 @@
+dist/
+build/
+*.tmp
+*.log
+*.orig
+*.rej
+DEVELOPMENT.md
