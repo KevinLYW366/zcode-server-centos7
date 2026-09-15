@@ -70,7 +70,7 @@ parse_arguments() {
 initialize_paths() {
     [[ -n "${ZCODE_ROOT}" && "${ZCODE_ROOT}" != *$'\n'* && "${ZCODE_ROOT}" != *$'\r'* ]] || \
         die "Unsafe Zcode root"
-    [[ "${ZCODE_ROOT}" != *'"'* && "${ZCODE_ROOT}" != *'\\'* ]] || \
+    [[ "${ZCODE_ROOT}" != *'"'* && "${ZCODE_ROOT}" != *\\* ]] || \
         die "Quotes and backslashes are not supported in the Zcode root"
 
     if [[ -d "${ZCODE_ROOT}" ]]; then
@@ -185,8 +185,9 @@ validate_runtime() {
     lib=$(manifest_get "${manifest}" LIB_DIR) || die "Runtime library directory is missing"
     patcher=$(manifest_get "${manifest}" PATCHELF) || die "Runtime patchelf is missing"
     [[ "${id}" =~ ^[A-Za-z0-9._-]+$ && "${arch}" == x86_64 ]] || die "Unsupported runtime"
-    validate_relative_path "${loader}" && validate_relative_path "${lib}" && \
-        validate_relative_path "${patcher}" || die "Unsafe runtime path"
+    validate_relative_path "${loader}" || die "Unsafe runtime loader path"
+    validate_relative_path "${lib}" || die "Unsafe runtime library path"
+    validate_relative_path "${patcher}" || die "Unsafe runtime patchelf path"
     while read -r _ file; do
         file=${file#\*}; validate_relative_path "${file}" || die "Unsafe checksum path"
     done <"${checksums}"

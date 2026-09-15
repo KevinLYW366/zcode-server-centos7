@@ -48,6 +48,10 @@ if "${CLI}" --zcode-root / inspect >/dev/null 2>&1; then
     fail "filesystem root was accepted"
 fi
 
+if "${CLI}" --zcode-root "${TEST_DIR}/bad\\path" inspect >/dev/null 2>&1; then
+    fail "backslash in Zcode root was accepted"
+fi
+
 mv "${TEST_DIR}/.zcode/server/node" "${TEST_DIR}/real-node"
 ln -s "${TEST_DIR}/real-node" "${TEST_DIR}/.zcode/server/node"
 if "${CLI}" --zcode-root "${TEST_DIR}/.zcode" inspect >/dev/null 2>&1; then
