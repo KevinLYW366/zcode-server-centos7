@@ -48,3 +48,4 @@ jobs:
             dist/zcode-server-centos7-*-x86_64.tar.gz \
             dist/zcode-server-centos7-*-x86_64.tar.gz.sha256 \
             --clobber
+          gh release edit "${GITHUB_REF_NAME}" --draft=false
