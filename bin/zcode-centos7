@@ -2,6 +2,8 @@
 
 # Patch only the Zcode-managed Node.js to use a private compatibility runtime.
 
+export LC_ALL=C
+
 set -euo pipefail
 
 readonly PROGRAM_NAME="zcode-centos7"
