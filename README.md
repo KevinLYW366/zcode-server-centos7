@@ -46,6 +46,7 @@ remote connection test:
 
 | Zcode client | Client OS | Remote OS | Architecture | Result |
 |---|---|---|---|---|
+| 3.14.5 | Windows | CentOS 7 | x86-64 | Remote connection successful |
 | 3.14.4 | Windows | CentOS 7 | x86-64 | Remote connection successful |
 | 3.14.3 | Windows | CentOS 7 | x86-64 | Remote connection successful |
 | 3.11.2 | Windows | CentOS 7 | x86-64 | Remote connection successful |
@@ -323,4 +324,3 @@ Project management code is licensed under the MIT License. Runtime artifacts
 contain separately licensed upstream components. A distributed runtime must
 include the corresponding license notices, exact source versions, patches,
 checksums, and reproducible build instructions.
-
