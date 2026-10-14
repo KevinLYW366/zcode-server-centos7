@@ -46,6 +46,7 @@ remote connection test:
 
 | Zcode client | Client OS | Remote OS | Architecture | Result |
 |---|---|---|---|---|
+| 3.15.3 | Windows | CentOS 7 | x86-64 | Remote connection successful |
 | 3.15.1 | Windows | CentOS 7 | x86-64 | Remote connection successful |
 | 3.14.5 | Windows | CentOS 7 | x86-64 | Remote connection successful |
 | 3.14.4 | Windows | CentOS 7 | x86-64 | Remote connection successful |
