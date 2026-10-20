@@ -5,4 +5,3 @@ build/
 *.orig
 *.rej
 __pycache__/
-DEVELOPMENT.md

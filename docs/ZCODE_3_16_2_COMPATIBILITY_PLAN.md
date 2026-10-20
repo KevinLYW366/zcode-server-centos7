@@ -374,7 +374,7 @@ Use the following release lines:
 
 | Tool release line | Installation model | ZCode versions | Status |
 |---|---|---|---|
-| `0.1.x` | Legacy fixed `server/node` | Windows 3.11.2, 3.14.3, 3.14.4, 3.14.5, 3.15.1, 3.15.3 | Historical manual connection results recorded in the README; original implementation was `0.1.0` |
+| `0.1.x` | Legacy fixed `server/node` | Windows 3.11.2, 3.14.3, 3.14.4, 3.14.5, 3.15.1, 3.15.3 | Historical manual connection results recorded in the [legacy guide](LEGACY.md); original implementation was `0.1.0` |
 | `0.2.0-rc.N` | Remote-only Source Server workflow | 3.16.2 | Development candidates superseded by 0.2.0 |
 | `0.2.x` stable | Verified remote-only workflow | Initially Windows 3.16.2 only | 0.2.0 accepted; host reboot excluded and untested |
 

@@ -28,6 +28,11 @@ release after verifying this SHA256:
 ce84f2447fb7a8679e58bc54a20dc2b01b37b5802e12c57eece772a6f14bf3f0
 ```
 
+## Import or build from a source checkout
+
+Release bundles already include the runtime. The commands in this section
+are for a repository checkout and run from its root directory.
+
 Import the runtime with:
 
 ```bash
@@ -50,10 +55,62 @@ PATCHELF_ARCHIVE=/path/to/patchelf-0.18.0-x86_64.tar.gz \
 The importer extracts only the private GNU runtime libraries. It does not copy
 or redistribute the VS Code CLI, VS Code Server, Zcode Server, or Zcode Node.js.
 
-After unpacking the resulting runtime archive, use it with the normal
-`zcode-centos7 --runtime-dir ... install` flow. Always run the integration test
-against a temporary Zcode root before modifying a real installation.
+The equivalent Make target is:
+
+```bash
+make runtime VSCODE_ARCHIVE="$PWD/vscode-server_1.137.0_x64.tar.gz"
+```
+
+Both input archives are checked against fixed SHA256 values. To use the Make
+target offline, also set `PATCHELF_ARCHIVE` to the downloaded patchelf archive.
+The generated runtime archive is written below `dist/`. Unpack it before
+passing it to an installer:
+
+```bash
+mkdir -p build/runtime
+tar -xzf dist/zcode-centos7-runtime-*.tar.gz -C build/runtime --strip-components=1
+```
+
+For the current Source Server workflow:
+
+```bash
+bin/zcode-centos7 --runtime-dir build/runtime source-server install --archive "$PWD/zcode-server-linux-x64.tar.gz"
+```
+
+For the [legacy workflow](LEGACY.md):
+
+```bash
+bin/zcode-centos7 --runtime-dir build/runtime install
+```
+
+Always run the relevant integration test against a temporary Zcode root
+before modifying a real installation. See the
+[Source Server validation instructions](ZCODE_3_16_2_COMPATIBILITY_PLAN.md#3-validation-and-acceptance)
+or the [historical development design](../DEVELOPMENT.md).
 
 The importer does not install anything below `~/.zcode`. Importing, unpacking,
-and integration testing are separate from modifying the real Zcode Node.js.
+and integration testing are separate from modifying a real Zcode installation.
+
+## Runtime layout
+
+An unpacked runtime has the following interface:
+
+```text
+runtime/
+├── manifest.env
+├── SHA256SUMS
+├── bin/
+│   └── patchelf
+├── lib/
+│   ├── ld-linux-x86-64.so.2
+│   ├── libc.so.6
+│   ├── libstdc++.so.6
+│   ├── libgcc_s.so.1
+│   └── ...
+└── licenses/
+```
+
+The installer validates every file listed in `SHA256SUMS` before using the
+runtime. Redistributed runtimes must retain the upstream license notices,
+exact source versions, patches, checksums, and reproducible build instructions.
 

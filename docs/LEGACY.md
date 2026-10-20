@@ -1,0 +1,259 @@
+# Legacy workflow (0.1.x)
+
+This guide covers the historical fixed `~/.zcode/server/node` layout and the
+**0.1.x** tool release line. Use the
+[v0.1.0 release](https://github.com/KevinLYW366/zcode-server-centos7/releases/tag/v0.1.0)
+for that layout. For **ZCode 3.16.2**, follow the current
+[README](../README.md) and its `source-server` commands instead.
+
+The legacy workflow does not patch other Node.js installations, recursively
+patch the Zcode server tree, change shell startup files, or export a
+compatibility `LD_LIBRARY_PATH`.
+
+## Requirements
+
+- CentOS 7 or a compatible RHEL 7 user space;
+- x86-64 CPU architecture;
+- Bash 4 or newer;
+- GNU `readelf`, `sha256sum`, `readlink`, `awk`, `sed`, and `grep`;
+- an installed Zcode remote server at `~/.zcode/server`;
+- a runtime directory built by this project or unpacked from a release bundle.
+
+Root access is not required.
+
+## Quick start
+
+Download the tool archive and checksum from the
+[v0.1.0 release](https://github.com/KevinLYW366/zcode-server-centos7/releases/tag/v0.1.0):
+
+- `zcode-server-centos7-0.1.0-x86_64.tar.gz`
+- `zcode-server-centos7-0.1.0-x86_64.tar.gz.sha256`
+
+Copy them to the CentOS 7 host where Zcode Remote Server is installed, then
+run as the SSH user:
+
+```bash
+sha256sum -c zcode-server-centos7-0.1.0-x86_64.tar.gz.sha256
+tar -xzf zcode-server-centos7-0.1.0-x86_64.tar.gz
+cd zcode-server-centos7-0.1.0
+
+bin/zcode-centos7 inspect
+bin/zcode-centos7 install
+bin/zcode-centos7 verify
+```
+
+The release archive includes the compatibility runtime, so release users do
+not need to build or download glibc, libstdc++, or patchelf separately. Root
+access is not required. Reconnect Zcode after installation.
+
+## Historical compatibility
+
+The following combinations have been verified with a manual end-to-end
+remote connection test:
+
+| Zcode client | Client OS | Remote OS | Architecture | Result |
+|---|---|---|---|---|
+| 3.15.3 | Windows | CentOS 7 | x86-64 | Remote connection successful |
+| 3.15.1 | Windows | CentOS 7 | x86-64 | Remote connection successful |
+| 3.14.5 | Windows | CentOS 7 | x86-64 | Remote connection successful |
+| 3.14.4 | Windows | CentOS 7 | x86-64 | Remote connection successful |
+| 3.14.3 | Windows | CentOS 7 | x86-64 | Remote connection successful |
+| 3.11.2 | Windows | CentOS 7 | x86-64 | Remote connection successful |
+
+These are historical results for the legacy layout. The new 3.16.2 workflow
+uses a separate installation model; do not interpret this table as a
+continuous version range.
+
+## Usage
+
+```text
+zcode-centos7 inspect
+zcode-centos7 install
+zcode-centos7 status
+zcode-centos7 verify
+zcode-centos7 repair
+zcode-centos7 uninstall
+```
+
+Common options:
+
+```text
+--zcode-root PATH
+--runtime-dir PATH
+--handshake
+```
+
+### Inspect without changing anything
+
+```bash
+bin/zcode-centos7 inspect
+```
+
+This reports the Node.js checksum, ELF interpreter, RPATH, required ABI
+versions, and Zcode runtime metadata location. It does not write files or start
+the Zcode server.
+
+### Install from a release bundle
+
+The release bundle contains a `runtime/` directory. When the command is run
+from the extracted bundle, no `--runtime-dir` option is needed:
+
+```bash
+bin/zcode-centos7 install
+```
+
+The installer performs all patching on a temporary Node.js copy. It installs
+the runtime and replaces the live Node.js only after checksum, ELF, Node.js,
+private-library, and child-shell checks pass.
+
+### Use a locally built runtime
+
+See [Runtime import and build instructions](USING_VSCODE_RUNTIME.md) for
+source archives, offline inputs, and unpacking. From the repository root,
+install an unpacked runtime explicitly:
+
+```bash
+bin/zcode-centos7 --runtime-dir build/runtime install
+```
+
+### Verify
+
+```bash
+bin/zcode-centos7 verify
+```
+
+The default verification starts only short-lived Node.js and `/bin/sh` test
+processes owned by the command. It does not stop an existing Zcode server.
+
+The full Zcode handshake test is opt-in because it starts
+`zcode-server.cjs`:
+
+```bash
+bin/zcode-centos7 --handshake verify
+```
+
+### Repair after a Zcode update
+
+Zcode may replace its Node.js runtime during an update. The tool does not block
+or modify the updater. Reapply the compatibility patch explicitly:
+
+```bash
+bin/zcode-centos7 repair
+```
+
+The new Node.js is backed up under its own SHA256 before it is patched.
+
+### Uninstall
+
+```bash
+bin/zcode-centos7 uninstall
+```
+
+Uninstall restores the byte-identical original Node.js only when the current
+file and saved state agree. Runtime files and backups are retained by default
+to avoid destructive cleanup.
+
+## Custom Zcode root
+
+For testing or a non-default installation:
+
+```bash
+bin/zcode-centos7 --zcode-root /absolute/path/to/.zcode inspect
+```
+
+All modifications remain below that root, and the only server executable that
+may be replaced is `<zcode-root>/server/node`.
+
+## Problem
+
+CentOS 7 normally provides glibc 2.17 and the GCC 4.8 C++ runtime. Recent Zcode
+Node.js builds require newer ABI versions, such as:
+
+```text
+GLIBC_2.25
+GLIBC_2.27
+GLIBC_2.28
+GLIBCXX_3.4.20
+GLIBCXX_3.4.21
+CXXABI_1.3.9
+```
+
+The Node.js process therefore exits before it can complete the Zcode remote
+handshake.
+
+## Isolation model
+
+The installer creates a verified backup of the original Zcode Node.js, patches
+a temporary copy, tests that copy, and then atomically replaces only
+`~/.zcode/server/node`.
+
+The patched ELF contains an interpreter pointing to a private Zcode-only
+dynamic loader. The verified loader imported from `vscode-server-centos7`
+resolves its matching GNU libraries from its own directory. The installer does
+not add or change the Node.js RPATH/RUNPATH.
+
+The resulting process chain is:
+
+```text
+Windows Zcode
+  -> SSH
+  -> ~/.zcode/server/node
+  -> ~/.zcode/centos7-runtime/releases/<id>/lib/ld-linux-x86-64.so.2
+  -> private glibc, libstdc++, and libgcc
+  -> zcode-server.cjs
+```
+
+No loader environment variable is added. When Zcode launches `/bin/sh`, Git,
+tests, or another system program, that program uses its own ELF interpreter and
+the normal CentOS 7 libraries.
+
+The legacy workflow never modifies:
+
+- `/lib`, `/lib64`, `/usr/lib`, or `/usr/lib64`;
+- `/etc/ld.so.conf` or the system loader cache;
+- `.bashrc`, `.bash_profile`, `.profile`, or SSH configuration;
+- global `PATH`, `LD_LIBRARY_PATH`, or `LD_PRELOAD` values; or
+- Zcode JavaScript files and unrelated executables.
+
+## Inspiration and differences
+
+This project is inspired by
+[MikeWang000000/vscode-server-centos7](https://github.com/MikeWang000000/vscode-server-centos7).
+That project builds a private glibc and GCC runtime, uses a compatible ELF
+patching implementation, redirects VS Code Server executables to the private
+loader, and validates the result on CentOS 7.
+
+The reusable implementation ideas are:
+
+1. keep the compatibility runtime in a user-owned directory;
+2. redirect an incompatible ELF to a private dynamic loader;
+3. include a matching `libstdc++.so.6` and `libgcc_s.so.1` as well as glibc;
+4. build for the CentOS 7 kernel baseline; and
+5. test the complete remote-server startup path on CentOS 7.
+
+The Zcode implementation is intentionally smaller. The reference project
+discovers VS Code commit directories, patches multiple server and extension
+executables, monitors extension metadata, and creates a VS Code-specific
+requirements-check marker. Legacy ZCode starts through a fixed
+`~/.zcode/server/node` path, so this project patches that single ELF only. It
+does not copy the reference project's VS Code directory discovery, extension
+watching, or server packaging code.
+
+The management code in this repository is an original implementation under
+the MIT license. The separately packaged glibc, libstdc++, libgcc, and patchelf
+components retain their upstream licenses.
+
+## Security and failure behavior
+
+- The installer refuses symbolic-link Node.js targets.
+- Unknown ELF interpreters are not overwritten.
+- Original files are addressed by SHA256 and never silently replaced.
+- Changes are made through temporary files on the same filesystem.
+- No broad process-killing command is used.
+- No file-watching daemon, cron job, or immutable file flag is installed.
+- Ambiguous update or uninstall state causes a safe failure.
+
+See the [historical development design](../DEVELOPMENT.md) for the original
+scope and test strategy, and [runtime documentation](USING_VSCODE_RUNTIME.md)
+for the runtime layout and provenance. Project management code uses the
+[MIT License](../LICENSE); runtime components retain their upstream licenses.

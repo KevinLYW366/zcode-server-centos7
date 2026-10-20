@@ -1,389 +1,124 @@
 # zcode-server-centos7
 
-`zcode-server-centos7` runs ZCode remote components on CentOS 7 using private
-runtime libraries. Version **0.2.0** adds a remote-only workflow for
-**Windows x64 ZCode 3.16.2**. It does not modify the Windows client.
+Run ZCode remote components on CentOS 7 with private runtime libraries.
+Tool **0.2.0** supports **Windows x64 ZCode 3.16.2** connecting over SSH to
+**CentOS 7 x86-64**. The Windows client remains unchanged.
 
-A real Windows ZCode 3.16.2 connection was
-confirmed by the user on 2026-10-20 after the SSH command-wrapper fix.
-Desktop project operations and task persistence after disconnect were also
-confirmed by the user. Isolated live rollback, explicit repair, and crash
-recovery checks passed. Host reboot was not tested and was explicitly excluded
-by the user from this acceptance scope. Keep ZCode pinned to 3.16.2. See
-[`compatibility.json`](compatibility.json) for exact release identities and
-[`docs/ZCODE_3_16_2_COMPATIBILITY_PLAN.md`](docs/ZCODE_3_16_2_COMPATIBILITY_PLAN.md)
-for the implementation and validation boundaries.
+For the historical `~/.zcode/server/node` layout, use the **0.1.x** release
+line and the [legacy guide](docs/LEGACY.md).
 
-## ZCode 3.16.2 quick start
+## Requirements
 
-Download and unpack the matching tool archive and verify its `.sha256` file.
-The tool bundle includes the private runtime. Obtain the official Source
-Server archive; its exact size and hash are pinned in the compatibility record:
+Run the installation on the remote host as the user used for SSH connections:
+
+- CentOS 7 x86-64, Linux kernel 3.10 or newer, with Bash as the SSH login shell.
+- Python 3.6+, Bash 4+, GNU `tar`, `timeout`, `readelf`, `sha256sum`,
+  `readlink`, `awk`, `sed`, `grep`, `sort`, and `mktemp`.
+- `curl` for the download commands below, or transfer the files to the host.
+- The default server root, `$HOME/.zcode`, for desktop connections.
+
+No root access is required. The tool bundle includes the private runtime;
+release users do not need to build glibc, libstdc++, or patchelf.
+
+## Quick start
+
+Complete these steps on the remote host before connecting from Windows.
+
+1. Download the tool archive and its checksum from the
+   [v0.2.0 release](https://github.com/KevinLYW366/zcode-server-centos7/releases/tag/v0.2.0):
+
+   ```bash
+   curl -fLO https://github.com/KevinLYW366/zcode-server-centos7/releases/download/v0.2.0/zcode-server-centos7-0.2.0-zcode-3.16.2-x86_64.tar.gz
+   curl -fLO https://github.com/KevinLYW366/zcode-server-centos7/releases/download/v0.2.0/zcode-server-centos7-0.2.0-zcode-3.16.2-x86_64.tar.gz.sha256
+   sha256sum -c zcode-server-centos7-0.2.0-zcode-3.16.2-x86_64.tar.gz.sha256
+   tar -xzf zcode-server-centos7-0.2.0-zcode-3.16.2-x86_64.tar.gz
+   cd zcode-server-centos7-0.2.0
+   ```
+
+2. Download the official Source Server archive, then install and verify:
+
+   ```bash
+   curl -fLO https://cdn-zcode.z.ai/zcode/electron/releases/3.16.2/zcode-server-linux-x64.tar.gz
+   bin/zcode-centos7 source-server install --archive "$PWD/zcode-server-linux-x64.tar.gz"
+   bin/zcode-centos7 source-server verify
+   ```
+
+   Installation checks the official archive against the pinned size and SHA256
+   in [compatibility.json](compatibility.json), prepares a compatible archive,
+   installs the server, and enables the SSH hook. A separate `prepare` command
+   is unnecessary for normal installation.
+
+3. Open **ZCode 3.16.2** on Windows and connect over SSH with the same user.
+   If ZCode is already connected, disconnect and reconnect.
+
+## Maintenance
+
+Run these commands from the unpacked tool directory as the same SSH user.
+
+### Check status
 
 ```bash
-curl -fLO https://cdn-zcode.z.ai/zcode/electron/releases/3.16.2/zcode-server-linux-x64.tar.gz
-bin/zcode-centos7 source-server prepare --archive "$PWD/zcode-server-linux-x64.tar.gz"
-bin/zcode-centos7 source-server install --archive "$PWD/zcode-server-linux-x64.tar.gz"
-bin/zcode-centos7 source-server verify
 bin/zcode-centos7 source-server status --json
 ```
 
-Run these commands on the remote host as the SSH user, before connecting from
-Windows. Source Server requires Python 3.6+, Bash SSH, `timeout`, and the legacy
-ELF/checksum utilities. No root access is required. Use the default
-`$HOME/.zcode` installation for desktop connections.
+Check the `ready` field and any reported error. To repeat short diagnostics,
+run `bin/zcode-centos7 source-server verify`; it starts no persistent daemon.
 
-Installation creates a host-specific derived archive, invokes the original
-Server CLI, and then adds a marked block at the top of `.bashrc`. The block
-only enables a `getconf` function in a non-interactive, non-PTY SSH session
-whose entire command matches the known ZCode probe. It reports the actual
-private glibc version only after checking the installed release and runtime.
-Matching includes the official SSH backend's exact `/bin/sh -c` wrapper.
-On CentOS 7, the parent Bash exports the function only for that wrapper;
-the child checks the exact inner command and stops exporting the function
-before running diagnostics. Ordinary SSH commands do not export it.
-Other commands, invalid state, or an eight-second verification timeout use the
-system `getconf`. No global library environment is added.
+### Repair or refresh an installation
 
-Use `source-server repair --archive PATH` for explicit reinstallation and
-updates. Desktop-managed server installation/update is not supported by this
-workflow. Unknown archives are refused. A future client can send the same
-probe, so the hook cannot identify its version automatically.
+Keep the supported official archive available and run:
 
-`source-server verify --handshake` explicitly starts or reuses a persistent
-daemon and checks its ready status. It does not stop that daemon. The default
-verification starts only short-lived diagnostic processes.
+```bash
+bin/zcode-centos7 source-server repair --archive "$PWD/zcode-server-linux-x64.tar.gz"
+```
 
-To remove the SSH hook while preserving the server, private runtime, backups,
-and later user edits to `.bashrc`:
+Use this command for explicit reinstallation and supported server updates.
+Existing **0.2.0-rc.1** installations must run it with the **0.2.0** tool to
+refresh installed state and hook files; replacing the tool alone is insufficient.
+
+### Check daemon readiness (optional)
+
+```bash
+bin/zcode-centos7 source-server verify --handshake
+```
+
+This starts or reuses a persistent daemon and checks its ready status. It
+leaves the daemon running.
+
+### Disable compatibility
 
 ```bash
 bin/zcode-centos7 source-server uninstall
 ```
 
-## Legacy workflow
-
-The original commands below retain their legacy target:
-
-```text
-~/.zcode/server/node
-```
-
-The legacy workflow does not patch other Node.js installations, recursively patch the Zcode
-server tree, change shell startup files, or export a compatibility
-`LD_LIBRARY_PATH`.
-
-## Legacy quick start
-
-Select a **0.1.x legacy release** for the historical layout and download:
-
-- `zcode-server-centos7-<version>-x86_64.tar.gz`
-- `zcode-server-centos7-<version>-x86_64.tar.gz.sha256`
-
-Copy them to the CentOS 7 host where Zcode Remote Server is installed, then
-run:
-
-```bash
-sha256sum -c zcode-server-centos7-<version>-x86_64.tar.gz.sha256
-tar -xzf zcode-server-centos7-<version>-x86_64.tar.gz
-cd zcode-server-centos7-<version>
-
-bin/zcode-centos7 inspect
-bin/zcode-centos7 install
-bin/zcode-centos7 verify
-```
-
-The release archive includes the compatibility runtime, so release users do
-not need to build or download glibc, libstdc++, or patchelf separately. Root
-access is not required. Reconnect Zcode after installation.
-
-## Historical legacy compatibility
-
-The following combinations have been verified with a manual end-to-end
-remote connection test:
-
-| Zcode client | Client OS | Remote OS | Architecture | Result |
-|---|---|---|---|---|
-| 3.15.3 | Windows | CentOS 7 | x86-64 | Remote connection successful |
-| 3.15.1 | Windows | CentOS 7 | x86-64 | Remote connection successful |
-| 3.14.5 | Windows | CentOS 7 | x86-64 | Remote connection successful |
-| 3.14.4 | Windows | CentOS 7 | x86-64 | Remote connection successful |
-| 3.14.3 | Windows | CentOS 7 | x86-64 | Remote connection successful |
-| 3.11.2 | Windows | CentOS 7 | x86-64 | Remote connection successful |
-
-These are historical results for the legacy layout. The new 3.16.2 workflow
-uses a separate installation model; do not interpret this table as a
-continuous version range.
-
-## Problem
-
-CentOS 7 normally provides glibc 2.17 and the GCC 4.8 C++ runtime. Recent Zcode
-Node.js builds require newer ABI versions, such as:
-
-```text
-GLIBC_2.25
-GLIBC_2.27
-GLIBC_2.28
-GLIBCXX_3.4.20
-GLIBCXX_3.4.21
-CXXABI_1.3.9
-```
-
-The Node.js process therefore exits before it can complete the Zcode remote
-handshake.
-
-## Legacy isolation model
-
-The installer creates a verified backup of the original Zcode Node.js, patches
-a temporary copy, tests that copy, and then atomically replaces only
-`~/.zcode/server/node`.
-
-The patched ELF contains an interpreter pointing to a private Zcode-only
-dynamic loader. The verified loader imported from `vscode-server-centos7`
-resolves its matching GNU libraries from its own directory. The installer does
-not add or change the Node.js RPATH/RUNPATH.
-
-The resulting process chain is:
-
-```text
-Windows Zcode
-  -> SSH
-  -> ~/.zcode/server/node
-  -> ~/.zcode/centos7-runtime/releases/<id>/lib/ld-linux-x86-64.so.2
-  -> private glibc, libstdc++, and libgcc
-  -> zcode-server.cjs
-```
-
-No loader environment variable is added. When Zcode launches `/bin/sh`, Git,
-tests, or another system program, that program uses its own ELF interpreter and
-the normal CentOS 7 libraries.
-
-The legacy workflow never modifies:
-
-- `/lib`, `/lib64`, `/usr/lib`, or `/usr/lib64`;
-- `/etc/ld.so.conf` or the system loader cache;
-- `.bashrc`, `.bash_profile`, `.profile`, or SSH configuration;
-- global `PATH`, `LD_LIBRARY_PATH`, or `LD_PRELOAD` values; or
-- Zcode JavaScript files and unrelated executables.
-
-## Inspiration and differences
-
-This project is inspired by
-[MikeWang000000/vscode-server-centos7](https://github.com/MikeWang000000/vscode-server-centos7).
-That project builds a private glibc and GCC runtime, uses a compatible ELF
-patching implementation, redirects VS Code Server executables to the private
-loader, and validates the result on CentOS 7.
-
-The reusable implementation ideas are:
-
-1. keep the compatibility runtime in a user-owned directory;
-2. redirect an incompatible ELF to a private dynamic loader;
-3. include a matching `libstdc++.so.6` and `libgcc_s.so.1` as well as glibc;
-4. build for the CentOS 7 kernel baseline; and
-5. test the complete remote-server startup path on CentOS 7.
-
-The Zcode implementation is intentionally smaller. The reference project
-discovers VS Code commit directories, patches multiple server and extension
-executables, monitors extension metadata, and creates a VS Code-specific
-requirements-check marker. Legacy ZCode starts through a fixed
-`~/.zcode/server/node` path, so this project patches that single ELF only. It
-does not copy the reference project's VS Code directory discovery, extension
-watching, or server packaging code.
-
-The management code in this repository is an original implementation under
-the MIT license. The separately packaged glibc, libstdc++, libgcc, and patchelf
-components retain their upstream licenses.
-
-## Legacy requirements
-
-- CentOS 7 or a compatible RHEL 7 user space;
-- x86-64 CPU architecture;
-- Bash 4 or newer;
-- GNU `readelf`, `sha256sum`, `readlink`, `awk`, `sed`, and `grep`;
-- an installed Zcode remote server at `~/.zcode/server`;
-- a runtime directory built by this project or unpacked from a release bundle.
-
-Root access is not required.
-
-## Legacy usage
-
-```text
-zcode-centos7 inspect
-zcode-centos7 install
-zcode-centos7 status
-zcode-centos7 verify
-zcode-centos7 repair
-zcode-centos7 uninstall
-```
-
-Common options:
-
-```text
---zcode-root PATH
---runtime-dir PATH
---handshake
-```
-
-### Inspect without changing anything
-
-```bash
-bin/zcode-centos7 inspect
-```
-
-This reports the Node.js checksum, ELF interpreter, RPATH, required ABI
-versions, and Zcode runtime metadata location. It does not write files or start
-the Zcode server.
-
-### Install from a release bundle
-
-The release bundle contains a `runtime/` directory. When the command is run
-from the extracted bundle, no `--runtime-dir` option is needed:
-
-```bash
-bin/zcode-centos7 install
-```
-
-The installer performs all patching on a temporary Node.js copy. It installs
-the runtime and replaces the live Node.js only after checksum, ELF, Node.js,
-private-library, and child-shell checks pass.
-
-### Build a runtime from source
-
-The tested runtime source is release 1.137.0 x64 from the reference project.
-Download the verified upstream archive, then run:
-
-```bash
-curl -fLO https://github.com/MikeWang000000/vscode-server-centos7/releases/download/1.137.0/vscode-server_1.137.0_x64.tar.gz
-make runtime VSCODE_ARCHIVE="$PWD/vscode-server_1.137.0_x64.tar.gz"
-```
-
-The importer downloads the pinned official static patchelf archive. To build
-fully offline, set `PATCHELF_ARCHIVE` to a previously downloaded patchelf
-archive. Both inputs are checked against fixed SHA256 values. The output is
-written below `dist/`; no VS Code or Zcode executable is copied into it. See
-[`docs/USING_VSCODE_RUNTIME.md`](docs/USING_VSCODE_RUNTIME.md) for provenance
-and version details.
-
-Unpack the generated archive before passing it to the installer:
-
-```bash
-mkdir -p build/runtime
-tar -xzf dist/zcode-centos7-runtime-*.tar.gz -C build/runtime --strip-components=1
-```
-
-Install a locally built runtime explicitly:
-
-```bash
-bin/zcode-centos7 --runtime-dir build/runtime install
-```
-
-### Verify
-
-```bash
-bin/zcode-centos7 verify
-```
-
-The default verification starts only short-lived Node.js and `/bin/sh` test
-processes owned by the command. It does not stop an existing Zcode server.
-
-The full Zcode handshake test is opt-in because it starts
-`zcode-server.cjs`:
-
-```bash
-bin/zcode-centos7 --handshake verify
-```
-
-### Repair after a Zcode update
-
-Zcode may replace its Node.js runtime during an update. The tool does not block
-or modify the updater. Reapply the compatibility patch explicitly:
-
-```bash
-bin/zcode-centos7 repair
-```
-
-The new Node.js is backed up under its own SHA256 before it is patched.
-
-### Uninstall
-
-```bash
-bin/zcode-centos7 uninstall
-```
-
-Uninstall restores the byte-identical original Node.js only when the current
-file and saved state agree. Runtime files and backups are retained by default
-to avoid destructive cleanup.
-
-## Legacy custom Zcode root
-
-For testing or a non-default installation:
-
-```bash
-bin/zcode-centos7 --zcode-root /absolute/path/to/.zcode inspect
-```
-
-All modifications remain below that root, and the only server executable that
-may be replaced is `<zcode-root>/server/node`.
-
-## Runtime layout
-
-An unpacked runtime has the following interface:
-
-```text
-runtime/
-├── manifest.env
-├── SHA256SUMS
-├── bin/
-│   └── patchelf
-├── lib/
-│   ├── ld-linux-x86-64.so.2
-│   ├── libc.so.6
-│   ├── libstdc++.so.6
-│   ├── libgcc_s.so.1
-│   └── ...
-└── licenses/
-```
-
-The installer validates every file listed in `SHA256SUMS` before using the
-runtime.
-
-## Development
-
-Run syntax checks and unit tests with:
-
-```bash
-make lint
-make test
-```
-
-## Publishing a release
-
-Set `PROGRAM_VERSION` in `bin/zcode-centos7`, commit the change, then push a
-matching tag:
-
-```bash
-git tag v0.2.0
-git push origin v0.2.0
-```
-
-The release workflow checks the version, runs the test suite, downloads and
-verifies the pinned runtime source, builds the self-contained x86-64 archive,
-and publishes the archive and its SHA256 file to GitHub Releases.
-
-## Security and failure behavior
-
-- The installer refuses symbolic-link Node.js targets.
-- Unknown ELF interpreters are not overwritten.
-- Original files are addressed by SHA256 and never silently replaced.
-- Changes are made through temporary files on the same filesystem.
-- No broad process-killing command is used.
-- No file-watching daemon, cron job, or immutable file flag is installed.
-  The Source Server workflow adds the marked `.bashrc` hook described above.
-- Ambiguous update or uninstall state causes a safe failure.
-
-## License
-
-Project management code is licensed under the MIT License. Runtime artifacts
-contain separately licensed upstream components. A distributed runtime must
-include the corresponding license notices, exact source versions, patches,
-checksums, and reproducible build instructions.
+This removes the managed SSH hook from `.bashrc` while preserving other
+content and later user edits. It retains the server, private runtime, derived
+archives, and backups, and does not stop server processes.
+
+## Limits and installation changes
+
+- Keep the desktop pinned to **ZCode 3.16.2**. Other client versions are
+  unverified, and the SSH probe cannot identify the client version.
+- Install and maintain the server with this remote helper. Desktop-managed
+  server installation and updates are unsupported; unknown archives are refused.
+- Installation adds a marked block to the SSH user's `.bashrc`. It enables
+  private-runtime `getconf` only for the exact known SSH probe after integrity
+  checks. Ordinary commands retain the system environment; no global
+  `LD_LIBRARY_PATH` or `LD_PRELOAD` is added.
+- Prepared archives contain host-specific absolute runtime paths; do not copy
+  them to another installation root.
+- Host reboot recovery has not been tested. This release makes no reboot
+  recovery guarantee.
+
+## Further reading and license
+
+- [Legacy 0.1.x guide and historical compatibility](docs/LEGACY.md)
+- [Compatibility identities and validation status](compatibility.json)
+- [Source Server design and acceptance details](docs/ZCODE_3_16_2_COMPATIBILITY_PLAN.md)
+- [Release notes](docs/RELEASE_NOTES.md)
+- [Runtime source, build instructions, and layout](docs/USING_VSCODE_RUNTIME.md)
+
+Inspired by [vscode-server-centos7](https://github.com/MikeWang000000/vscode-server-centos7).
+Project management code uses the [MIT License](LICENSE). Runtime components
+retain their upstream licenses; see [third-party notices](THIRD_PARTY_NOTICES.md)
+and the bundled `runtime/licenses/` directory.
