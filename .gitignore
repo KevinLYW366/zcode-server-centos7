@@ -4,4 +4,5 @@ build/
 *.log
 *.orig
 *.rej
+__pycache__/
 DEVELOPMENT.md

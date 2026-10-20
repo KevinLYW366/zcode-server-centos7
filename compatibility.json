@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "tool_version": "0.2.0",
+  "status": "stable",
+  "model": "source-server-ssh-probe",
+  "candidate_zcode_versions": [
+    "3.16.2"
+  ],
+  "end_to_end_verified_zcode_versions": [
+    "3.16.2"
+  ],
+  "validation": {
+    "windows_desktop_connection": {
+      "status": "user-confirmed",
+      "date": "2026-10-20",
+      "note": "Windows ZCode 3.16.2 connected after applying the SSH command-wrapper fix."
+    },
+    "windows_project_operations": {
+      "status": "user-confirmed",
+      "date": "2026-10-20",
+      "note": "Open project, create/edit files, terminal creation, file/content search, and Git status."
+    },
+    "task_persistence_after_disconnect": {
+      "status": "user-confirmed",
+      "date": "2026-10-20",
+      "note": "A short task completed and its result was confirmed after desktop disconnect/reconnect."
+    },
+    "isolated_live_update_rollback": {
+      "status": "passed",
+      "date": "2026-10-20",
+      "note": "Real daemons, post-activation failure, successful rollback, corrupt recovery archive, and explicit repair. The next archive changes only gzip metadata around the same verified payload."
+    },
+    "isolated_crash_recovery": {
+      "status": "passed",
+      "date": "2026-10-20",
+      "note": "Recovery after killing only temporary server processes, retaining stale run files, and starting again over SSH; daemon remained ready after SSH disconnect. This was not a host reboot."
+    },
+    "host_reboot": {
+      "status": "excluded-by-user",
+      "date": "2026-10-20",
+      "note": "Not performed. The user explicitly excluded host reboot from this acceptance scope."
+    },
+    "pending": []
+  },
+  "client": {
+    "os": "windows",
+    "arch": "x64",
+    "build": "3.16.2.8769",
+    "host_bundle_sha256": "0018ac1f40c1b72f6b59ff31ac1ab7f1be7d82614c7aba94bde64df319a92c30"
+  },
+  "remote": {
+    "os": "centos7",
+    "arch": "x86_64",
+    "shell": "bash",
+    "minimum_kernel": "3.10"
+  },
+  "source_server": {
+    "version": "3.16.2",
+    "target": "linux-x64",
+    "size_bytes": 91189880,
+    "sha256": "947eb91d3dd7d8a539d9df8d0e46c52a796e076c46b14feb004558337ab3bf3d",
+    "url": "https://cdn-zcode.z.ai/zcode/electron/releases/3.16.2/zcode-server-linux-x64.tar.gz",
+    "executables": {
+      "runtime/node": "8142d37c6f2f372ef040419e7a111a6baf17df89f8078d02447d6c639ae20c1d",
+      "runtime/tools/bfs/bfs": "ffbcf14adc40645c2679434d137c8a2537fe8ffe826a62c5c95622c2de02c610",
+      "runtime/tools/ugrep/ugrep": "3276614f7d47c2d1b78d92d75203629b2c1e9bbe6b9b912afab12906b8d9352f"
+    }
+  },
+  "legacy": {
+    "release_line": "0.1.x",
+    "historically_verified_zcode_versions": [
+      "3.11.2",
+      "3.14.3",
+      "3.14.4",
+      "3.14.5",
+      "3.15.1",
+      "3.15.3"
+    ]
+  },
+  "limitations": [
+    "Pin the desktop to ZCode 3.16.2; the probe contains no client version.",
+    "Preinstall and update using the remote helper, not the desktop installer.",
+    "Host reboot was not tested and was explicitly excluded by the user; no reboot recovery guarantee is claimed."
+  ],
+  "probe_sha256": "f12e15e195c521c661b3aadc8ce0fac3a721489f06a35f7014bc0d45cd07c242",
+  "runtime": {
+    "id": "vscode-1.137.0-glibc-2.44-libstdcxx-6.0.36-x86_64",
+    "checksum_manifest_sha256": "0b5453c01fe6df206bf29b11f121bc24e25ae2e1d0bed2c247203997a33e32cd",
+    "upstream_archive_sha256": "1ee04fef60c35af3aa981ecba7d44b631a45b2ee611394edcdaa68d7abe2ed8a",
+    "legacy_checksum_manifest_sha256": [
+      "204b7a1fa8da1ef05dc34bce2d24a89199199695b1dbf6d4389e19e7ea7abfe5"
+    ]
+  }
+}

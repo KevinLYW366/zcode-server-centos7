@@ -7,6 +7,15 @@ set -euo pipefail
 ROOT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 VERSION=$(sed -n 's/^readonly PROGRAM_VERSION="\([^"]*\)"/\1/p' \
     "${ROOT_DIR}/bin/zcode-centos7")
+python3 - "${ROOT_DIR}/compatibility.json" "${VERSION}" <<'PY'
+import json, sys
+with open(sys.argv[1]) as f:
+    metadata = json.load(f)
+assert metadata['tool_version'] == sys.argv[2], 'Compatibility metadata version mismatch'
+assert metadata['candidate_zcode_versions'] == ['3.16.2'], 'Unexpected supported-version set'
+if '-' not in sys.argv[2]:
+    assert '3.16.2' in metadata['end_to_end_verified_zcode_versions'], 'Stable release requires end-to-end evidence'
+PY
 RUNTIME_ARCHIVE=${RUNTIME_ARCHIVE:-}
 
 if [[ -z "${RUNTIME_ARCHIVE}" ]]; then
@@ -20,24 +29,40 @@ fi
 
 BUILD_DIR="${ROOT_DIR}/build/release/zcode-server-centos7-${VERSION}"
 rm -rf -- "${ROOT_DIR}/build/release"
-mkdir -p "${BUILD_DIR}/bin" "${BUILD_DIR}/runtime" "${BUILD_DIR}/docs"
+mkdir -p "${BUILD_DIR}/bin" "${BUILD_DIR}/runtime" "${BUILD_DIR}/docs" "${BUILD_DIR}/src"
 cp -- "${ROOT_DIR}/bin/zcode-centos7" "${BUILD_DIR}/bin/"
 cp -- "${ROOT_DIR}/README.md" "${ROOT_DIR}/LICENSE" \
     "${ROOT_DIR}/THIRD_PARTY_NOTICES.md" "${BUILD_DIR}/"
-cp -- "${ROOT_DIR}/docs/USING_VSCODE_RUNTIME.md" "${BUILD_DIR}/docs/"
+cp -- "${ROOT_DIR}/compatibility.json" "${BUILD_DIR}/"
+cp -- "${ROOT_DIR}/src/source_server.py" "${ROOT_DIR}/src/ssh_probe_hook.bash" \
+    "${ROOT_DIR}/src/probe-3.16.2.sh" "${BUILD_DIR}/src/"
+cp -- "${ROOT_DIR}/docs/USING_VSCODE_RUNTIME.md" \
+    "${ROOT_DIR}/docs/ZCODE_3_16_2_COMPATIBILITY_PLAN.md" \
+    "${ROOT_DIR}/docs/RELEASE_NOTES.md" "${BUILD_DIR}/docs/"
 tar -xzf "${RUNTIME_ARCHIVE}" -C "${BUILD_DIR}/runtime" --strip-components=1
+python3 - "${BUILD_DIR}" <<'PY'
+import hashlib, json, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+metadata = json.loads((root / 'compatibility.json').read_text())
+actual = hashlib.sha256((root / 'runtime/SHA256SUMS').read_bytes()).hexdigest()
+assert actual == metadata['runtime']['checksum_manifest_sha256'], 'Release requires the canonical runtime manifest'
+PY
+(cd "${BUILD_DIR}/runtime" && sha256sum -c SHA256SUMS >/dev/null)
 
 TAR_REPRODUCIBLE_ARGS=(--mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner)
 if tar --help 2>&1 | grep -q -- '--sort'; then
     TAR_REPRODUCIBLE_ARGS+=(--sort=name)
 fi
-ARCHIVE_NAME="zcode-server-centos7-${VERSION}-x86_64.tar.gz"
+ARCHIVE_NAME="zcode-server-centos7-${VERSION}-zcode-3.16.2-x86_64.tar.gz"
 tar "${TAR_REPRODUCIBLE_ARGS[@]}" \
     -czf "${ROOT_DIR}/dist/${ARCHIVE_NAME}" \
     -C "${ROOT_DIR}/build/release" "zcode-server-centos7-${VERSION}"
 (
     cd "${ROOT_DIR}/dist"
+    cp -- "${ROOT_DIR}/compatibility.json" "zcode-server-centos7-${VERSION}-compatibility.json"
     sha256sum "${ARCHIVE_NAME}" >"${ARCHIVE_NAME}.sha256"
+    sha256sum "zcode-server-centos7-${VERSION}-compatibility.json" \
+        >"zcode-server-centos7-${VERSION}-compatibility.json.sha256"
 )
 
 

@@ -7,12 +7,13 @@ export LC_ALL=C
 set -euo pipefail
 
 readonly PROGRAM_NAME="zcode-centos7"
-readonly PROGRAM_VERSION="0.1.0"
+readonly PROGRAM_VERSION="0.2.0"
 
 ZCODE_ROOT="${HOME}/.zcode"
 RUNTIME_SOURCE=""
 HANDSHAKE_TEST=0
 COMMAND=""
+SOURCE_SERVER_ARGS=()
 LOCK_HELD=0
 TEMP_PATH=""
 
@@ -24,6 +25,7 @@ usage() {
 Usage: zcode-centos7 [options] <command>
 
 Commands: inspect, install, status, verify, repair, uninstall
+          source-server {prepare,install,verify,status,repair,uninstall}
 
 Options:
   --zcode-root PATH    Zcode root (default: $HOME/.zcode)
@@ -51,6 +53,9 @@ require_command() {
 parse_arguments() {
     while (($#)); do
         case "$1" in
+            source-server)
+                [[ -z "${COMMAND}" ]] || die "Only one command may be specified"
+                COMMAND="source-server"; shift; SOURCE_SERVER_ARGS=("$@"); break ;;
             --zcode-root)
                 (($# > 1)) || die "--zcode-root requires a path"
                 ZCODE_ROOT=$2; shift 2 ;;
@@ -366,9 +371,17 @@ main() {
     for command in readlink readelf sha256sum awk sed grep sort mktemp; do require_command "${command}"; done
     parse_arguments "$@"; initialize_paths
     case "${COMMAND}" in
+        source-server)
+            require_command python3
+            local here
+            here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+            local args=(--cli "${here}/zcode-centos7" --zcode-root "${ZCODE_ROOT}")
+            [[ -z "${RUNTIME_SOURCE}" ]] || args+=(--runtime-dir "${RUNTIME_SOURCE}")
+            (( ! HANDSHAKE_TEST )) || args+=(--handshake)
+            exec python3 "${here}/../src/source_server.py" "${args[@]}" "${SOURCE_SERVER_ARGS[@]}" ;;
         inspect) inspect_command ;; install) install_command ;; status) status_command ;;
         verify) verify_command ;; repair) repair_command ;; uninstall) uninstall_command ;;
     esac
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then main "$@"; fi

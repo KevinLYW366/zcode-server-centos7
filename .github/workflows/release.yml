@@ -23,7 +23,7 @@ jobs:
         run: |
           make lint
           make test
-          shellcheck bin/zcode-centos7 scripts/*.sh tests/*.sh
+          shellcheck bin/zcode-centos7 src/ssh_probe_hook.bash scripts/*.sh tests/*.sh
 
       - name: Download verified runtime source
         run: |
@@ -42,10 +42,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          prerelease_args=()
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then prerelease_args+=(--prerelease); fi
           gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
-            gh release create "${GITHUB_REF_NAME}" --generate-notes --verify-tag
+            gh release create "${GITHUB_REF_NAME}" --verify-tag "${prerelease_args[@]}" \
+              --title "${GITHUB_REF_NAME} - ZCode 3.16.2 / Windows to CentOS 7 x86-64" \
+              --notes-file docs/RELEASE_NOTES.md
           gh release upload "${GITHUB_REF_NAME}" \
             dist/zcode-server-centos7-*-x86_64.tar.gz \
             dist/zcode-server-centos7-*-x86_64.tar.gz.sha256 \
+            dist/zcode-server-centos7-*-compatibility.json \
+            dist/zcode-server-centos7-*-compatibility.json.sha256 \
             --clobber
-          gh release edit "${GITHUB_REF_NAME}" --draft=false
+          gh release edit "${GITHUB_REF_NAME}" --draft=false "${prerelease_args[@]}"

@@ -15,6 +15,6 @@ jobs:
       - name: Check shell syntax
         run: make lint
       - name: Run ShellCheck
-        run: shellcheck bin/zcode-centos7 scripts/*.sh tests/*.sh
+        run: shellcheck bin/zcode-centos7 src/ssh_probe_hook.bash scripts/*.sh tests/*.sh
       - name: Run unit tests
         run: make test
