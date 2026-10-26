@@ -1,4 +1,30 @@
-# 0.2.0 - ZCode 3.16.2 on CentOS 7
+# 0.3.0 - ZCode 3.16.3 on CentOS 7
+
+This release pins the official Linux x64 Server 3.16.3 archive and uses its
+version throughout preparation, CLI validation, installation state, and release
+packaging. It retains the private runtime and exact SSH probe hook. The existing
+3.16.2 probe fixture keeps its filename; no broader probe matching is enabled.
+
+Desktop-managed updates remain unsupported: their extracted bootstrap Node
+has not received the private ELF interpreter and fails before installation on
+CentOS 7. Existing 0.2.0 or 0.3.0-rc.1 users must run this release's `source-server repair
+--archive PATH` with the official **3.16.3** archive after finishing remote
+tasks, then reconnect from Windows 3.16.3. The vendor updater is invoked without
+`--force`. Replacing helper files alone does not update the installed server.
+
+The user confirmed completion of Windows ZCode 3.16.3 desktop acceptance on
+**2026-10-26**, covering the agreed connection, project operations, and task
+persistence scope. This promotes the candidate to **0.3.0**.
+The Windows 3.16.3 Host bundle has not been independently inspected.
+The user's update log passes environment checks;
+automated SSH replay uses the retained exact 3.16.2 probe. Host reboot remains
+excluded and untested. See [the validation record](ZCODE_3_16_3_COMPATIBILITY.md).
+
+Use **0.2.0** for the verified 3.16.2 workflow and **0.1.x** for the legacy
+fixed `server/node` layout. This release accepts only its pinned 3.16.3
+archive; it does not broaden support to an arbitrary version range.
+
+# Previous release: 0.2.0 - ZCode 3.16.2 on CentOS 7
 
 This release adds a remote-only Source Server compatibility workflow.
 The Windows ZCode application is unchanged. A managed Bash startup hook uses

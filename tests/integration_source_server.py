@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Opt-in vendor-archive integration; all installations use a disposable HOME."""
 import argparse
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -11,9 +12,10 @@ import sys
 import tempfile
 import tarfile
 import time
+from unittest import mock
 
 from ssh_harness import client_exec_command, ssh_session
-from lifecycle_acceptance import check_lifecycle
+from lifecycle_acceptance import assert_active, check_lifecycle
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,7 +25,11 @@ def main():
     parser.add_argument("--archive", required=True)
     parser.add_argument("--runtime-dir", required=True)
     parser.add_argument("--cli", default=str(ROOT / "bin/zcode-centos7"))
+    parser.add_argument("--previous-cli", help="Optional older helper for a real cross-version upgrade")
+    parser.add_argument("--previous-archive")
     args = parser.parse_args()
+    if bool(args.previous_cli) != bool(args.previous_archive):
+        parser.error("--previous-cli and --previous-archive must be provided together")
     temporary = Path(tempfile.mkdtemp(prefix="zcode-source-e2e."))
     home = temporary / "home"
     home.mkdir()
@@ -32,9 +38,9 @@ def main():
            "--runtime-dir", str(Path(args.runtime_dir).resolve()), "source-server"]
     archive = str(Path(args.archive).resolve())
 
-    def call(*arguments):
+    def call(*arguments, executable=args.cli):
         env = dict(os.environ, ZCODE_SERVER_SKIP_SERVICE_REGISTRATION="1")
-        p = subprocess.run(cli + list(arguments), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        p = subprocess.run([str(Path(executable).resolve())] + cli[1:] + list(arguments), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                            env=env, timeout=240)
         if p.returncode:
             raise RuntimeError(p.stderr.decode("utf-8", "replace"))
@@ -63,12 +69,52 @@ def main():
         (zroot / "centos7-runtime").mkdir(parents=True)
         legacy = zroot / "centos7-runtime/state.json"
         legacy.write_text('{"legacy":true}\n')
+        if args.previous_cli:
+            call("install", "--archive", str(Path(args.previous_archive).resolve()), executable=args.previous_cli)
+            call("verify", "--handshake", executable=args.previous_cli)
+            previous_current = (zroot / "server/current.json").read_bytes()
+            previous_state = (zroot / "centos7-runtime/source-server/state.json").read_bytes()
+            previous_profile = (home / ".bashrc").read_bytes()
+            previous_version = json.loads(previous_current.decode())["version"]
         prepared = json.loads(call("prepare", "--archive", archive))
         print("Prepared verified compatible archive", flush=True)
         again = json.loads(call("prepare", "--archive", archive))
         assert prepared == again
-        assert not (zroot / "server/current.json").exists()
+        if args.previous_cli:
+            assert prepared["zcode_version"] != previous_version
+            assert (zroot / "server/current.json").read_bytes() == previous_current
+            # Exercise real rollback to the older payload, state, and hook.
+            spec = importlib.util.spec_from_file_location("upgrade_source_server", str(ROOT / "src/source_server.py"))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            helper = module.SourceServer(argparse.Namespace(
+                zcode_root=str(zroot), runtime_dir=args.runtime_dir, cli=args.cli, archive=archive))
+            helper.env["ZCODE_SERVER_SKIP_SERVICE_REGISTRATION"] = "1"
+
+            def fail_upgrade(record):
+                current = assert_active(zroot)
+                assert current["version"] == prepared["zcode_version"]
+                raise ValueError("Cross-version post-activation fault")
+
+            with helper.lock(), mock.patch.object(helper, "verify_record", side_effect=fail_upgrade):
+                try:
+                    helper.install()
+                except ValueError as error:
+                    assert str(error) == "Cross-version post-activation fault", str(error)
+                else:
+                    raise AssertionError("Cross-version failure was not reported")
+            assert assert_active(zroot)["archiveSha256"] == json.loads(previous_current.decode())["archiveSha256"]
+            assert helper.state_path.read_bytes() == previous_state
+            assert (home / ".bashrc").read_bytes() == previous_profile
+            call("verify", "--handshake", executable=args.previous_cli)
+            print("Cross-version activation fault restored {} and its compatibility hook".format(previous_version), flush=True)
+        else:
+            assert not (zroot / "server/current.json").exists()
         installed = json.loads(call("install", "--archive", archive))
+        if args.previous_cli:
+            call("verify", "--handshake")
+            assert assert_active(zroot)["version"] == installed["zcode_version"]
+            print("Real {} -> {} upgrade verified".format(previous_version, installed["zcode_version"]), flush=True)
         print("Installed and verified Source Server", flush=True)
         current = json.loads((zroot / "server/current.json").read_text())
         actual_manifest = json.loads((Path(current["releaseDir"]) / "manifest.json").read_text())

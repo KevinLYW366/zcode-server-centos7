@@ -242,7 +242,7 @@ class SourceServer:
                         'let text="";p.onData(x=>text+=x);p.onExit(e=>process.exit(e.exitCode===0&&text.includes("pty-ok")?0:1));'
                         'setTimeout(()=>{p.kill();process.exit(2)},5000).unref();')
             run([node, "-e", terminal, release_dir / "runtime/node_modules/node-pty"], self.env)
-        require(run([release_dir / "bin/zcode", "--version"], self.env) == "3.16.2", "Unexpected Server CLI version")
+        require(run([release_dir / "bin/zcode", "--version"], self.env) == self.release["version"], "Unexpected Server CLI version")
 
     def prepare(self):
         require(platform.system() == "Linux" and platform.machine() == "x86_64", "Only Linux x86-64 is supported")
@@ -265,7 +265,7 @@ class SourceServer:
             extracted.mkdir()
             root = extract_archive(archive, extracted)
             runtime_manifest = read_json(root / "manifest.json")
-            require(runtime_manifest["appVersion"] == "3.16.2" and runtime_manifest["target"] == "linux-x64", "Manifest target mismatch")
+            require(runtime_manifest["appVersion"] == self.release["version"] and runtime_manifest["target"] == self.release["target"], "Manifest target mismatch")
             for relative, sha in self.release["executables"].items():
                 p = root / relative
                 require(digest(p) == sha, "Unknown executable: " + relative)
@@ -283,7 +283,7 @@ class SourceServer:
             os.chmod(str(root / "manifest.json"), 0o644)
             self.check_programs(root, directory, native=True)
             pack_archive(root, temporary / "compatible.tar.gz")
-            record = {"schema_version": 1, "tool_version": self.meta["tool_version"], "zcode_version": "3.16.2",
+            record = {"schema_version": 1, "tool_version": self.meta["tool_version"], "zcode_version": self.release["version"],
                       "official_sha256": self.release["sha256"], "derived_sha256": digest(temporary / "compatible.tar.gz"),
                       "artifact_dir": str(destination), "runtime_dir": str(directory), "runtime_id": manifest["RUNTIME_ID"],
                       "runtime_checksums_sha256": fingerprint, "loader": str(loader), "zcode_root": str(self.root)}
@@ -298,13 +298,14 @@ class SourceServer:
     def verify_record(self, record, programs=True):
         require(digest(HERE / "probe-3.16.2.sh") == self.meta["probe_sha256"], "Probe fixture checksum mismatch")
         require(record["schema_version"] == 1 and record["zcode_root"] == str(self.root)
+                and record["zcode_version"] == self.release["version"]
                 and record["official_sha256"] == self.release["sha256"]
                 and record["tool_version"] == self.meta["tool_version"], "Unrecognized compatibility state")
         directory = Path(record["runtime_dir"])
         manifest, _ = self.runtime(directory, record["runtime_checksums_sha256"])
         require(record["loader"] == str(directory / manifest["LOADER"]), "Runtime loader changed")
         current = read_json(self.server / "current.json")
-        require(current["version"] == "3.16.2" and current["archiveSha256"] == record["derived_sha256"], "Current release differs from compatibility state")
+        require(current["version"] == self.release["version"] and current["archiveSha256"] == record["derived_sha256"], "Current release differs from compatibility state")
         release_dir = Path(current["releaseDir"])
         require(release_dir.resolve() == release_dir and self.server / "releases" in release_dir.parents, "Unsafe current release directory")
         integrity = read_json(release_dir / ".release-integrity.json")

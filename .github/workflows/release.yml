@@ -44,9 +44,10 @@ jobs:
         run: |
           prerelease_args=()
           if [[ "${GITHUB_REF_NAME}" == *-* ]]; then prerelease_args+=(--prerelease); fi
+          zcode_version=$(python3 -c 'import json; print(json.load(open("compatibility.json"))["source_server"]["version"])')
           gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
             gh release create "${GITHUB_REF_NAME}" --verify-tag "${prerelease_args[@]}" \
-              --title "${GITHUB_REF_NAME} - ZCode 3.16.2 / Windows to CentOS 7 x86-64" \
+              --title "${GITHUB_REF_NAME} - ZCode ${zcode_version} / Windows to CentOS 7 x86-64" \
               --notes-file docs/RELEASE_NOTES.md
           gh release upload "${GITHUB_REF_NAME}" \
             dist/zcode-server-centos7-*-x86_64.tar.gz \

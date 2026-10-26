@@ -12,10 +12,11 @@ import json, sys
 with open(sys.argv[1]) as f:
     metadata = json.load(f)
 assert metadata['tool_version'] == sys.argv[2], 'Compatibility metadata version mismatch'
-assert metadata['candidate_zcode_versions'] == ['3.16.2'], 'Unexpected supported-version set'
+assert metadata['candidate_zcode_versions'] == [metadata['source_server']['version']], 'Unexpected supported-version set'
 if '-' not in sys.argv[2]:
-    assert '3.16.2' in metadata['end_to_end_verified_zcode_versions'], 'Stable release requires end-to-end evidence'
+    assert metadata['source_server']['version'] in metadata['end_to_end_verified_zcode_versions'], 'Stable release requires end-to-end evidence'
 PY
+ZCODE_VERSION=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["source_server"]["version"])' "${ROOT_DIR}/compatibility.json")
 RUNTIME_ARCHIVE=${RUNTIME_ARCHIVE:-}
 
 if [[ -z "${RUNTIME_ARCHIVE}" ]]; then
@@ -39,6 +40,7 @@ cp -- "${ROOT_DIR}/src/source_server.py" "${ROOT_DIR}/src/ssh_probe_hook.bash" \
 cp -- "${ROOT_DIR}/docs/USING_VSCODE_RUNTIME.md" \
     "${ROOT_DIR}/docs/LEGACY.md" \
     "${ROOT_DIR}/docs/ZCODE_3_16_2_COMPATIBILITY_PLAN.md" \
+    "${ROOT_DIR}/docs/ZCODE_3_16_3_COMPATIBILITY.md" \
     "${ROOT_DIR}/docs/RELEASE_NOTES.md" "${BUILD_DIR}/docs/"
 tar -xzf "${RUNTIME_ARCHIVE}" -C "${BUILD_DIR}/runtime" --strip-components=1
 python3 - "${BUILD_DIR}" <<'PY'
@@ -54,7 +56,7 @@ TAR_REPRODUCIBLE_ARGS=(--mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-ow
 if tar --help 2>&1 | grep -q -- '--sort'; then
     TAR_REPRODUCIBLE_ARGS+=(--sort=name)
 fi
-ARCHIVE_NAME="zcode-server-centos7-${VERSION}-zcode-3.16.2-x86_64.tar.gz"
+ARCHIVE_NAME="zcode-server-centos7-${VERSION}-zcode-${ZCODE_VERSION}-x86_64.tar.gz"
 tar "${TAR_REPRODUCIBLE_ARGS[@]}" \
     -czf "${ROOT_DIR}/dist/${ARCHIVE_NAME}" \
     -C "${ROOT_DIR}/build/release" "zcode-server-centos7-${VERSION}"

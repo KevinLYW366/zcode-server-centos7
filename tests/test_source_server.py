@@ -104,6 +104,28 @@ class SourceServerTests(unittest.TestCase):
         self.assertFalse(self.helper.status(probe=True))
         self.assertFalse(self.helper.root.exists())
 
+    def test_program_checks_require_selected_server_version(self):
+        version = self.helper.release["version"]
+
+        def output(args, *unused_args, **unused_kwargs):
+            if Path(args[0]).name == "node" and args[1:] == ["--version"]:
+                return "v22.16.0"
+            return version
+
+        with mock.patch.object(ss, "run", side_effect=output):
+            self.helper.check_programs(self.root, self.root)
+        version = "3.16.2"
+        with mock.patch.object(ss, "run", side_effect=output):
+            with self.assertRaisesRegex(ValueError, "Server CLI version"):
+                self.helper.check_programs(self.root, self.root)
+
+    def test_state_cannot_claim_a_different_zcode_version(self):
+        record = {"schema_version": 1, "zcode_root": str(self.helper.root),
+                  "zcode_version": "3.16.2", "official_sha256": self.helper.release["sha256"],
+                  "tool_version": self.helper.meta["tool_version"]}
+        with self.assertRaisesRegex(ValueError, "compatibility state"):
+            self.helper.verify_record(record)
+
     def test_wrapped_probe_function_stops_at_diagnostic_process(self):
         if subprocess.call(["/bin/sh", "-c", 'test -n "${BASH_VERSION-}"']) != 0:
             self.skipTest("Function inheritance requires Bash-based /bin/sh (CentOS 7 target)")
@@ -183,8 +205,9 @@ class SourceServerTests(unittest.TestCase):
     def test_release_version_and_explicit_compatibility(self):
         actual = subprocess.check_output([str(ROOT / "bin/zcode-centos7"), "--version"]).decode().split()[1]
         self.assertEqual(actual, self.helper.meta["tool_version"])
-        self.assertEqual(self.helper.meta["candidate_zcode_versions"], ["3.16.2"])
-        self.assertEqual(self.helper.meta["end_to_end_verified_zcode_versions"], ["3.16.2"])
+        self.assertEqual(self.helper.meta["candidate_zcode_versions"], ["3.16.3"])
+        self.assertEqual(self.helper.release["version"], "3.16.3")
+        self.assertEqual(self.helper.meta["end_to_end_verified_zcode_versions"], ["3.16.3"])
         self.assertEqual(self.helper.meta["validation"]["windows_desktop_connection"]["status"],
                          "user-confirmed")
         self.assertEqual(self.helper.meta["validation"]["host_reboot"]["status"], "excluded-by-user")

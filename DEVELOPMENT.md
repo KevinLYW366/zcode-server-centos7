@@ -2,8 +2,10 @@
 
 > 历史范围说明：本文保留 `0.1.x` 旧版固定 `~/.zcode/server/node` 布局的设计，
 > 不适用于 `0.2.0` 的 Source Server 流程。旧版使用方法见[旧版指南](docs/LEGACY.md)；
-> ZCode 3.16.2 的当前用法见 [README](README.md)，技术方案与验收边界见
-> [Source Server 兼容性文档](docs/ZCODE_3_16_2_COMPATIBILITY_PLAN.md)。
+> 当前 0.3.0 稳定版适配 ZCode 3.16.3，用法见 [README](README.md)，验证记录见
+> [3.16.3 兼容性文档](docs/ZCODE_3_16_3_COMPATIBILITY.md)。
+> 0.2.0 稳定版的技术方案与验收边界见
+> [3.16.2 Source Server 兼容性文档](docs/ZCODE_3_16_2_COMPATIBILITY_PLAN.md)。
 
 ## 1. 文档目的
 

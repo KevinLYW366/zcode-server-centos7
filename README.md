@@ -1,8 +1,39 @@
 # zcode-server-centos7
 
 Run ZCode remote components on CentOS 7 with private runtime libraries.
-Tool **0.2.0** supports **Windows x64 ZCode 3.16.2** connecting over SSH to
-**CentOS 7 x86-64**. The Windows client remains unchanged.
+Tool **0.3.0** supports **Windows x64 ZCode 3.16.3** connecting over SSH to
+**CentOS 7 x86-64**. Desktop acceptance was confirmed on 2026-10-26.
+The Windows client remains unchanged.
+
+## ZCode 3.16.3
+
+The desktop requires Server 3.16.3 and cannot reuse Server 3.16.2. Its built-in
+updater extracts an unpatched bootstrap Node, which cannot start against
+CentOS 7's system libraries. Repeating the desktop update does not apply this
+tool's private runtime. Use the remote helper to prepare and install the new
+archive first.
+
+For an existing **0.2.0** or **0.3.0-rc.1** compatible installation, run from this checkout as
+the same SSH user after remote tasks have completed:
+
+```bash
+curl -fL https://cdn-zcode.z.ai/zcode/electron/releases/3.16.3/zcode-server-linux-x64.tar.gz \
+  -o /tmp/zcode-server-3.16.3-linux-x64.tar.gz
+bin/zcode-centos7 source-server repair --archive /tmp/zcode-server-3.16.3-linux-x64.tar.gz
+bin/zcode-centos7 source-server verify
+```
+
+Repair verifies the pinned official archive and reuses the installed private
+runtime. It invokes the vendor updater without `--force`; finish running tasks
+before updating. Then reconnect from Windows 3.16.3. Desktop connection,
+project operations, and task persistence have passed user acceptance.
+Existing 0.3.0-rc.1 users must also run repair to refresh the versioned state
+and installed hook. See the [3.16.3 validation record](docs/ZCODE_3_16_3_COMPATIBILITY.md).
+
+## Verified ZCode 3.16.2 release
+
+Tool **0.2.0** remains the verified release for **Windows x64 ZCode 3.16.2**.
+The following download and maintenance instructions apply to that release.
 
 For the historical `~/.zcode/server/node` layout, use the **0.1.x** release
 line and the [legacy guide](docs/LEGACY.md).
