@@ -86,7 +86,7 @@ bin/zcode-centos7 --runtime-dir build/runtime install
 Always run the relevant integration test against a temporary Zcode root
 before modifying a real installation. See the
 [Source Server validation instructions](ZCODE_3_16_2_COMPATIBILITY_PLAN.md#3-validation-and-acceptance)
-or the [historical development design](../DEVELOPMENT.md).
+or the [historical development design](LEGACY_DESIGN.md).
 
 The importer does not install anything below `~/.zcode`. Importing, unpacking,
 and integration testing are separate from modifying a real Zcode installation.

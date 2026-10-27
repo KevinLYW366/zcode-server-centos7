@@ -253,7 +253,7 @@ components retain their upstream licenses.
 - No file-watching daemon, cron job, or immutable file flag is installed.
 - Ambiguous update or uninstall state causes a safe failure.
 
-See the [historical development design](../DEVELOPMENT.md) for the original
+See the [historical development design](LEGACY_DESIGN.md) for the original
 scope and test strategy, and [runtime documentation](USING_VSCODE_RUNTIME.md)
 for the runtime layout and provenance. Project management code uses the
 [MIT License](../LICENSE); runtime components retain their upstream licenses.
