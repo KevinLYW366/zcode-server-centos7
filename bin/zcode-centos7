@@ -7,7 +7,7 @@ export LC_ALL=C
 set -euo pipefail
 
 readonly PROGRAM_NAME="zcode-centos7"
-readonly PROGRAM_VERSION="0.3.0"
+readonly PROGRAM_VERSION="0.2.1"
 
 ZCODE_ROOT="${HOME}/.zcode"
 RUNTIME_SOURCE=""

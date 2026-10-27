@@ -41,6 +41,7 @@ cp -- "${ROOT_DIR}/docs/USING_VSCODE_RUNTIME.md" \
     "${ROOT_DIR}/docs/LEGACY.md" \
     "${ROOT_DIR}/docs/ZCODE_3_16_2_COMPATIBILITY_PLAN.md" \
     "${ROOT_DIR}/docs/ZCODE_3_16_3_COMPATIBILITY.md" \
+    "${ROOT_DIR}/docs/UPGRADE_POLICY.md" \
     "${ROOT_DIR}/docs/RELEASE_NOTES.md" "${BUILD_DIR}/docs/"
 tar -xzf "${RUNTIME_ARCHIVE}" -C "${BUILD_DIR}/runtime" --strip-components=1
 python3 - "${BUILD_DIR}" <<'PY'

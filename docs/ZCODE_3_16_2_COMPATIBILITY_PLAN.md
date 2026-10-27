@@ -382,16 +382,13 @@ The legacy list is an exact tested-version list, not a claim that every ZCode
 version below 3.16.2 works. ZCode 3.16.1 and future releases remain unverified
 unless separately tested. Do not advertise `>= 3.16.2` support.
 
-Proposed version rules while the tool remains below 1.0:
-
-- **Patch release**, such as `0.2.1`: fixes within the same installation model,
-  command contract, state format, and supported ZCode-version set. A new
-  vendor build hash still requires validation and a published metadata update.
-- **Minor release**, such as `0.3.0`: changes the installation model or state
-  contract, or adds a newly verified ZCode version to the supported set.
-- **Prerelease**, such as `0.2.0-rc.1`: distributes reviewable work before all
-  stable acceptance criteria have passed. Prerelease status does not imply
-  production support.
+The current [versioning policy](UPGRADE_POLICY.md#6-versioning-and-release)
+uses patch releases for routine ZCode adaptations, fixes, and metadata updates
+within the same installation model, command contract, and state format.
+Minor releases add tool capabilities or change those contracts or migration
+requirements. Each release declares its own exact verified ZCode combination.
+Prereleases distribute reviewable work before stable acceptance is complete;
+they do not imply production support.
 
 ### 4.2 Make compatibility visible in every release
 

@@ -30,7 +30,7 @@ printf 'outside-data\n' >"${TEST_DIR}/outside"
 OUTSIDE_SHA=$(sha256sum "${TEST_DIR}/outside" | awk '{print $1}')
 
 OUTPUT=$("${CLI}" --version)
-assert_contains "${OUTPUT}" "zcode-centos7 0.3.0"
+assert_contains "${OUTPUT}" "zcode-centos7 0.2.1"
 
 OUTPUT=$("${CLI}" --help)
 assert_contains "${OUTPUT}" "inspect"

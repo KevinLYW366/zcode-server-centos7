@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "tool_version": "0.3.0",
+  "tool_version": "0.2.1",
   "status": "stable",
   "model": "source-server-ssh-probe",
   "candidate_zcode_versions": [
@@ -27,13 +27,13 @@
     },
     "isolated_source_server_integration": {
       "status": "passed",
-      "date": "2026-10-26",
-      "note": "CentOS 7 / kernel 3.10: archive preparation, installation/reuse, native modules and PTY, search, exact retained SSH probe/wrapper, corruption fallback, daemon handshake, live rollback, incomplete recovery/repair, crash/stale-state recovery, uninstall and environment isolation. Temporary HOME and loopback SSH only."
+      "date": "2026-10-27",
+      "note": "Revalidated with the 0.2.1 release bundle. CentOS 7 / kernel 3.10: archive preparation, installation/reuse, native modules and PTY, search, exact retained SSH probe/wrapper, corruption fallback, daemon handshake, live rollback, incomplete recovery/repair, crash/stale-state recovery, uninstall and environment isolation. Temporary HOME and loopback SSH only."
     },
     "isolated_version_upgrade": {
       "status": "passed",
-      "date": "2026-10-26",
-      "note": "A real temporary 3.16.2 daemon installed by the unmodified packaged 0.2.0 helper was upgraded to the official 3.16.3 payload. An injected post-activation verification failure first restored the old archive identity, compatibility state and Bash hook; the old helper verified daemon readiness, then the real upgrade succeeded."
+      "date": "2026-10-27",
+      "note": "Revalidated with the 0.2.1 release bundle. A real temporary 3.16.2 daemon installed by the unmodified packaged 0.2.0 helper was upgraded to the official 3.16.3 payload. An injected post-activation verification failure first restored the old archive identity, compatibility state and Bash hook; the old helper verified daemon readiness, then the real upgrade succeeded."
     },
     "host_reboot": {
       "status": "excluded-by-user",

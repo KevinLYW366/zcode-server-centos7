@@ -47,7 +47,7 @@ jobs:
           zcode_version=$(python3 -c 'import json; print(json.load(open("compatibility.json"))["source_server"]["version"])')
           gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
             gh release create "${GITHUB_REF_NAME}" --verify-tag "${prerelease_args[@]}" \
-              --title "${GITHUB_REF_NAME} - ZCode ${zcode_version} / Windows to CentOS 7 x86-64" \
+              --title "${GITHUB_REF_NAME} - ZCode ${zcode_version}" \
               --notes-file docs/RELEASE_NOTES.md
           gh release upload "${GITHUB_REF_NAME}" \
             dist/zcode-server-centos7-*-x86_64.tar.gz \
