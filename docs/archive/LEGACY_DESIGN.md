@@ -2,14 +2,14 @@
 
 > Historical scope: this document preserves the design for the legacy `0.1.x`
 > fixed `~/.zcode/server/node` layout. It does not apply to the `0.2.0` Source
-> Server workflow. See the [legacy guide](LEGACY.md) for legacy usage.
+> Server workflow. See the [legacy guide](../LEGACY.md) for legacy usage.
 > The current 0.2.1 stable release supports ZCode 3.16.3; see the
-> [README](../README.md) for usage and the
-> [3.16.3 compatibility record](ZCODE_3_16_3_COMPATIBILITY.md) for validation.
+> [README](../../README.md) for usage and the
+> [3.16.3 compatibility record](../ZCODE_3_16_3_COMPATIBILITY.md) for validation.
 > The 0.2.0 stable design and acceptance boundaries are documented in the
 > [3.16.2 Source Server compatibility document](ZCODE_3_16_2_COMPATIBILITY_PLAN.md).
 > For future adaptation, release gates, and user upgrade and recovery procedures,
-> see the [upgrade and compatibility policy](UPGRADE_POLICY.md). This
+> see the [upgrade and compatibility policy](../UPGRADE_POLICY.md). This
 > historical design is not the current update procedure.
 
 ## 1. Purpose

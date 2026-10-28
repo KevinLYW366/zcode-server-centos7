@@ -140,7 +140,7 @@ The supported target is Windows x64 ZCode **3.16.2**, connecting over SSH to
 CentOS 7 x86-64 using Bash. The Windows application and its ASAR are unchanged.
 Python 3.6+, Bash, timeout, GNU tar, readelf, and checksum utilities are required
 on the remote host. The included private runtime is documented in
-[USING_VSCODE_RUNTIME.md](USING_VSCODE_RUNTIME.md).
+[USING_VSCODE_RUNTIME.md](../USING_VSCODE_RUNTIME.md).
 
 The legacy commands and their `state.json` remain separate. Source Server
 artifacts, installation records, hook code, and profile backups live under
@@ -374,7 +374,7 @@ Use the following release lines:
 
 | Tool release line | Installation model | ZCode versions | Status |
 |---|---|---|---|
-| `0.1.x` | Legacy fixed `server/node` | Windows 3.11.2, 3.14.3, 3.14.4, 3.14.5, 3.15.1, 3.15.3 | Historical manual connection results recorded in the [legacy guide](LEGACY.md); original implementation was `0.1.0` |
+| `0.1.x` | Legacy fixed `server/node` | Windows 3.11.2, 3.14.3, 3.14.4, 3.14.5, 3.15.1, 3.15.3 | Historical manual connection results recorded in the [legacy guide](../LEGACY.md); original implementation was `0.1.0` |
 | `0.2.0-rc.N` | Remote-only Source Server workflow | 3.16.2 | Development candidates superseded by 0.2.0 |
 | `0.2.x` stable | Verified remote-only workflow | Initially Windows 3.16.2 only | 0.2.0 accepted; host reboot excluded and untested |
 
@@ -382,7 +382,7 @@ The legacy list is an exact tested-version list, not a claim that every ZCode
 version below 3.16.2 works. ZCode 3.16.1 and future releases remain unverified
 unless separately tested. Do not advertise `>= 3.16.2` support.
 
-The current [versioning policy](UPGRADE_POLICY.md#6-versioning-and-release)
+The current [versioning policy](../UPGRADE_POLICY.md#6-versioning-and-release)
 uses patch releases for routine ZCode adaptations, fixes, and metadata updates
 within the same installation model, command contract, and state format.
 Minor releases add tool capabilities or change those contracts or migration

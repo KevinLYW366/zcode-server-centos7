@@ -3,8 +3,9 @@
 This guide covers the historical fixed `~/.zcode/server/node` layout and the
 **0.1.x** tool release line. Use the
 [v0.1.0 release](https://github.com/KevinLYW366/zcode-server-centos7/releases/tag/v0.1.0)
-for that layout. For **ZCode 3.16.2**, follow the current
-[README](../README.md) and its `source-server` commands instead.
+for that layout. For **ZCode 3.16.2**, follow the
+[v0.2.0 installation guide](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.0/README.md)
+and its `source-server` commands instead.
 
 The legacy workflow does not patch other Node.js installations, recursively
 patch the Zcode server tree, change shell startup files, or export a
@@ -253,7 +254,7 @@ components retain their upstream licenses.
 - No file-watching daemon, cron job, or immutable file flag is installed.
 - Ambiguous update or uninstall state causes a safe failure.
 
-See the [historical development design](LEGACY_DESIGN.md) for the original
+See the [historical development design](archive/LEGACY_DESIGN.md) for the original
 scope and test strategy, and [runtime documentation](USING_VSCODE_RUNTIME.md)
 for the runtime layout and provenance. Project management code uses the
 [MIT License](../LICENSE); runtime components retain their upstream licenses.

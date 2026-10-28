@@ -30,7 +30,7 @@ fi
 
 BUILD_DIR="${ROOT_DIR}/build/release/zcode-server-centos7-${VERSION}"
 rm -rf -- "${ROOT_DIR}/build/release"
-mkdir -p "${BUILD_DIR}/bin" "${BUILD_DIR}/runtime" "${BUILD_DIR}/docs" "${BUILD_DIR}/src"
+mkdir -p "${BUILD_DIR}/bin" "${BUILD_DIR}/runtime" "${BUILD_DIR}/docs/archive" "${BUILD_DIR}/src"
 cp -- "${ROOT_DIR}/bin/zcode-centos7" "${BUILD_DIR}/bin/"
 cp -- "${ROOT_DIR}/README.md" "${ROOT_DIR}/LICENSE" \
     "${ROOT_DIR}/THIRD_PARTY_NOTICES.md" "${BUILD_DIR}/"
@@ -39,11 +39,11 @@ cp -- "${ROOT_DIR}/src/source_server.py" "${ROOT_DIR}/src/ssh_probe_hook.bash" \
     "${ROOT_DIR}/src/probe-3.16.2.sh" "${BUILD_DIR}/src/"
 cp -- "${ROOT_DIR}/docs/USING_VSCODE_RUNTIME.md" \
     "${ROOT_DIR}/docs/LEGACY.md" \
-    "${ROOT_DIR}/docs/LEGACY_DESIGN.md" \
-    "${ROOT_DIR}/docs/ZCODE_3_16_2_COMPATIBILITY_PLAN.md" \
     "${ROOT_DIR}/docs/ZCODE_3_16_3_COMPATIBILITY.md" \
     "${ROOT_DIR}/docs/UPGRADE_POLICY.md" \
     "${ROOT_DIR}/docs/RELEASE_NOTES.md" "${BUILD_DIR}/docs/"
+cp -- "${ROOT_DIR}/docs/archive/LEGACY_DESIGN.md" \
+    "${ROOT_DIR}/docs/archive/ZCODE_3_16_2_COMPATIBILITY_PLAN.md" "${BUILD_DIR}/docs/archive/"
 tar -xzf "${RUNTIME_ARCHIVE}" -C "${BUILD_DIR}/runtime" --strip-components=1
 python3 - "${BUILD_DIR}" <<'PY'
 import hashlib, json, pathlib, sys
