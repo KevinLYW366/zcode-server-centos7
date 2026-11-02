@@ -102,7 +102,26 @@ under `/tmp`. The production `.bashrc`, server current pointer, and
 compatibility state were not touched; no production upgrade or host reboot
 was performed.
 
-Windows ZCode 3.17.1 desktop acceptance is pending. Until the user confirms
-it, 0.2.2 remains a candidate (`0.2.2-rc.1`) and 3.17.1 must not be added to
-`end_to_end_verified_zcode_versions`. Host reboot remains explicitly excluded
-by the user's earlier instruction.
+## Desktop acceptance and stable promotion (2026-11-02)
+
+The user repaired the real default `~/.zcode` installation with the local
+0.2.2-rc.1 helper and the official 3.17.1 archive. The compatibility state
+was refreshed to tool 0.2.2-rc.1 / ZCode 3.17.1, the 3.17.1 release became
+active, and `verify` passed. On 2026-11-02 the user updated the Windows
+desktop to ZCode 3.17.1, confirmed completion of the agreed desktop
+acceptance scope, and reported a successful connection. The managed hook
+therefore still receives an acceptable probe command from the 3.17.1
+client; the probe fixture remains the retained exact 3.16.2 text. The
+production derived archive SHA-256 for this host/root is
+`a4689fd6b6eb0ecf423e48c6a346d63ceb8133c82404f12f03d2120adbdf2584`;
+it is specific to that installation, not a distributable identity.
+Host reboot was not performed or claimed.
+
+After desktop acceptance, the candidate was promoted to stable
+**0.2.2**: `end_to_end_verified_zcode_versions` now includes 3.17.1, the
+desktop validation entries record the user confirmation, and the pending
+list is empty. Local 0.2.2-rc.1 installations require one `repair` with
+the stable 0.2.2 helper to refresh the versioned state and support files;
+this keeps Server 3.17.1 and is not a downgrade. Automated suites do not
+rerun desktop acceptance; that evidence remains the user-confirmed
+2026-11-02 result above.

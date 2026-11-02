@@ -26,12 +26,15 @@ Windows 3.17.1 only after verification succeeds and status reports
 repaired: the client raises its minimum compatible server version.
 Replacing tool files alone is insufficient.
 
-Windows desktop acceptance for 3.17.1 is recorded separately in the
-[validation record](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.2/docs/ZCODE_3_17_1_COMPATIBILITY.md).
-The Windows Host bundle has not been independently inspected. Host reboot
-remains untested. Desktop-managed server installation and updates remain
-unsupported. See the
-[upgrade guide](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.2/docs/UPGRADE_POLICY.md).
+Windows desktop acceptance for 3.17.1 was confirmed by the user on
+**2026-11-02**; it is manual evidence, separate from automated release
+checks. The Windows Host bundle has not been independently inspected. Host
+reboot remains untested. Desktop-managed server installation and updates
+remain unsupported. Local, unpublished **0.2.2-rc.1** users also need repair
+with the stable tool to refresh the versioned state and support files.
+See the
+[validation record](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.2/docs/ZCODE_3_17_1_COMPATIBILITY.md)
+and [upgrade guide](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.2/docs/UPGRADE_POLICY.md).
 
 For ZCode **3.16.3**, retain [v0.2.1](https://github.com/KevinLYW366/zcode-server-centos7/releases/tag/v0.2.1)
 and its [installation guide](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.1/README.md).

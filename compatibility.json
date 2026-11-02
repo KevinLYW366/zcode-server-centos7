@@ -1,27 +1,29 @@
 {
   "schema_version": 1,
-  "tool_version": "0.2.2-rc.1",
-  "status": "candidate",
+  "tool_version": "0.2.2",
+  "status": "stable",
   "model": "source-server-ssh-probe",
   "candidate_zcode_versions": [
     "3.17.1"
   ],
-  "end_to_end_verified_zcode_versions": [],
+  "end_to_end_verified_zcode_versions": [
+    "3.17.1"
+  ],
   "validation": {
     "windows_desktop_connection": {
-      "status": "pending",
-      "date": null,
-      "note": "Windows ZCode 3.17.1 desktop acceptance has not been performed."
+      "status": "user-confirmed",
+      "date": "2026-11-02",
+      "note": "The user confirmed completion of the agreed Windows ZCode 3.17.1 desktop acceptance scope."
     },
     "windows_project_operations": {
-      "status": "pending",
-      "date": null,
-      "note": "Windows ZCode 3.17.1 desktop acceptance has not been performed."
+      "status": "user-confirmed",
+      "date": "2026-11-02",
+      "note": "The user confirmed completion of the agreed Windows ZCode 3.17.1 desktop acceptance scope."
     },
     "task_persistence_after_disconnect": {
-      "status": "pending",
-      "date": null,
-      "note": "Windows ZCode 3.17.1 desktop acceptance has not been performed."
+      "status": "user-confirmed",
+      "date": "2026-11-02",
+      "note": "The user confirmed completion of the agreed Windows ZCode 3.17.1 desktop acceptance scope."
     },
     "isolated_source_server_integration": {
       "status": "passed",
@@ -38,11 +40,7 @@
       "date": "2026-10-20",
       "note": "The existing exclusion remains in effect; no host reboot is performed."
     },
-    "pending": [
-      "windows_desktop_connection",
-      "windows_project_operations",
-      "task_persistence_after_disconnect"
-    ]
+    "pending": []
   },
   "client": {
     "os": "windows",

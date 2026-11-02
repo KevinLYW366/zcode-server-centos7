@@ -207,9 +207,9 @@ class SourceServerTests(unittest.TestCase):
         self.assertEqual(actual, self.helper.meta["tool_version"])
         self.assertEqual(self.helper.meta["candidate_zcode_versions"], ["3.17.1"])
         self.assertEqual(self.helper.release["version"], "3.17.1")
-        self.assertEqual(self.helper.meta["end_to_end_verified_zcode_versions"], [])
+        self.assertEqual(self.helper.meta["end_to_end_verified_zcode_versions"], ["3.17.1"])
         self.assertEqual(self.helper.meta["validation"]["windows_desktop_connection"]["status"],
-                         "pending")
+                         "user-confirmed")
         self.assertEqual(self.helper.meta["validation"]["host_reboot"]["status"], "excluded-by-user")
         self.assertEqual(ss.digest(ROOT / "src/probe-3.16.2.sh"), self.helper.meta["probe_sha256"])
 
