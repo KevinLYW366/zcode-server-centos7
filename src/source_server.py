@@ -241,7 +241,10 @@ class SourceServer:
             terminal = ('const p=require(process.argv[1]).spawn("/bin/sh",["-c","printf pty-ok"],{env:process.env});'
                         'let text="";p.onData(x=>text+=x);p.onExit(e=>process.exit(e.exitCode===0&&text.includes("pty-ok")?0:1));'
                         'setTimeout(()=>{p.kill();process.exit(2)},5000).unref();')
-            run([node, "-e", terminal, release_dir / "runtime/node_modules/node-pty"], self.env)
+            # 3.17.1 ships @lydell/node-pty-linux-x64 whose package.json has
+            # "exports" but no "main", so directory-path require no longer
+            # resolves; require the entry file directly.
+            run([node, "-e", terminal, release_dir / "runtime/node_modules/node-pty/lib/index.js"], self.env)
         require(run([release_dir / "bin/zcode", "--version"], self.env) == self.release["version"], "Unexpected Server CLI version")
 
     def prepare(self):

@@ -205,11 +205,11 @@ class SourceServerTests(unittest.TestCase):
     def test_release_version_and_explicit_compatibility(self):
         actual = subprocess.check_output([str(ROOT / "bin/zcode-centos7"), "--version"]).decode().split()[1]
         self.assertEqual(actual, self.helper.meta["tool_version"])
-        self.assertEqual(self.helper.meta["candidate_zcode_versions"], ["3.16.3"])
-        self.assertEqual(self.helper.release["version"], "3.16.3")
-        self.assertEqual(self.helper.meta["end_to_end_verified_zcode_versions"], ["3.16.3"])
+        self.assertEqual(self.helper.meta["candidate_zcode_versions"], ["3.17.1"])
+        self.assertEqual(self.helper.release["version"], "3.17.1")
+        self.assertEqual(self.helper.meta["end_to_end_verified_zcode_versions"], [])
         self.assertEqual(self.helper.meta["validation"]["windows_desktop_connection"]["status"],
-                         "user-confirmed")
+                         "pending")
         self.assertEqual(self.helper.meta["validation"]["host_reboot"]["status"], "excluded-by-user")
         self.assertEqual(ss.digest(ROOT / "src/probe-3.16.2.sh"), self.helper.meta["probe_sha256"])
 

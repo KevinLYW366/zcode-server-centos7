@@ -9,12 +9,13 @@ automatic production update.
 
 ## 1. Current Baseline and Boundaries
 
-The **0.2.1** release supports Windows x64 ZCode
-**3.16.3** connecting to CentOS 7 x86-64 / kernel 3.10 / Bash SSH, using Source
-Server **3.16.3**. Tool **0.2.0** corresponds to ZCode **3.16.2**; the historical
-fixed `server/node` layout uses **0.1.x**. Supported identities and evidence are
-recorded in each release's [compatibility.json](../compatibility.json) and
-[version-specific validation record](ZCODE_3_16_3_COMPATIBILITY.md). Do not claim
+The **0.2.2** release supports Windows x64 ZCode
+**3.17.1** connecting to CentOS 7 x86-64 / kernel 3.10 / Bash SSH, using Source
+Server **3.17.1**. Tool **0.2.1** corresponds to ZCode **3.16.3**, and
+**0.2.0** to ZCode **3.16.2**; the historical fixed `server/node` layout uses
+**0.1.x**. Supported identities and evidence are recorded in each release's
+[compatibility.json](../compatibility.json) and
+[version-specific validation record](ZCODE_3_17_1_COMPATIBILITY.md). Do not claim
 support for an arbitrary version range.
 
 Keep installation under an ordinary user account, with a private runtime and a
@@ -188,7 +189,8 @@ verify, readiness, and desktop connectivity.
 - Tool versions are independent of ZCode. While below 1.0, routine ZCode
   adaptations, fixes, and metadata updates increment the patch version when
   the installation model, command contract, and state format remain unchanged.
-  For example, `0.2.0` supports ZCode 3.16.2 and `0.2.1` supports ZCode 3.16.3.
+  For example, `0.2.0` supports ZCode 3.16.2, `0.2.1` supports ZCode 3.16.3,
+  and `0.2.2` supports ZCode 3.17.1.
   Each release pins its own verified combination; a shared `0.2.x` prefix does
   not imply support for the same client versions.
 - Increment the minor version for new tool capabilities or changes to the
@@ -225,11 +227,11 @@ verify, readiness, and desktop connectivity.
 
 ## 7. User Deployment and Recovery
 
-The verified stable upgrade source for `0.2.1` is tool `0.2.0` with ZCode
-3.16.2. Local, unpublished `0.3.0` and `0.3.0-rc.1` builds for ZCode 3.16.3
-also require repair with `0.2.1` to refresh the tool-versioned state and support
+The verified stable upgrade source for `0.2.2` is tool `0.2.1` with ZCode
+3.16.3. Local, unpublished `0.3.0` and `0.3.0-rc.1` builds for ZCode 3.16.3
+also require repair to refresh the tool-versioned state and support
 files. This keeps the same server version; it is not a server downgrade.
-See the [3.16.3 validation record](ZCODE_3_16_3_COMPATIBILITY.md) for results.
+See the [3.17.1 validation record](ZCODE_3_17_1_COMPATIBILITY.md) for results.
 The `0.1.x` installation model requires its separate
 [legacy guide](LEGACY.md); this release does not claim a direct legacy upgrade.
 
