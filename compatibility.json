@@ -1,39 +1,39 @@
 {
   "schema_version": 1,
-  "tool_version": "0.2.2",
+  "tool_version": "0.2.3",
   "status": "stable",
   "model": "source-server-ssh-probe",
   "candidate_zcode_versions": [
-    "3.17.1"
+    "3.17.2"
   ],
   "end_to_end_verified_zcode_versions": [
-    "3.17.1"
+    "3.17.2"
   ],
   "validation": {
     "windows_desktop_connection": {
       "status": "user-confirmed",
-      "date": "2026-11-02",
-      "note": "The user confirmed completion of the agreed Windows ZCode 3.17.1 desktop acceptance scope."
+      "date": "2026-11-03",
+      "note": "The user confirmed completion of the agreed Windows ZCode 3.17.2 desktop acceptance scope."
     },
     "windows_project_operations": {
       "status": "user-confirmed",
-      "date": "2026-11-02",
-      "note": "The user confirmed completion of the agreed Windows ZCode 3.17.1 desktop acceptance scope."
+      "date": "2026-11-03",
+      "note": "The user confirmed completion of the agreed Windows ZCode 3.17.2 desktop acceptance scope."
     },
     "task_persistence_after_disconnect": {
       "status": "user-confirmed",
-      "date": "2026-11-02",
-      "note": "The user confirmed completion of the agreed Windows ZCode 3.17.1 desktop acceptance scope."
+      "date": "2026-11-03",
+      "note": "The user confirmed completion of the agreed Windows ZCode 3.17.2 desktop acceptance scope."
     },
     "isolated_source_server_integration": {
       "status": "passed",
-      "date": "2026-10-30",
-      "note": "Validated with the local 0.2.2-rc.1 source tree and the built rc bundle. CentOS 7 / kernel 3.10: archive preparation, installation/reuse, native modules and PTY, search, exact retained SSH probe/wrapper, corruption fallback, daemon handshake, live rollback, incomplete recovery/repair, crash/stale-state recovery, uninstall and environment isolation. Temporary HOME and loopback SSH only."
+      "date": "2026-11-03",
+      "note": "Validated with the local 0.2.3-rc.1 source tree and the built rc bundle. CentOS 7 / kernel 3.10: archive preparation, installation/reuse, native modules and PTY, search, exact retained SSH probe/wrapper, corruption fallback, daemon handshake, live rollback, incomplete recovery/repair, crash/stale-state recovery, uninstall and environment isolation. Temporary HOME and loopback SSH only."
     },
     "isolated_version_upgrade": {
       "status": "passed",
-      "date": "2026-10-30",
-      "note": "A real temporary 3.16.3 daemon installed by the unmodified packaged public 0.2.1 helper was upgraded to the official 3.17.1 payload. An injected post-activation verification failure first restored the old archive identity, compatibility state and Bash hook; the old helper verified daemon readiness, then the real upgrade succeeded. Rerun with the built 0.2.2-rc.1 bundle as the new helper."
+      "date": "2026-11-03",
+      "note": "A real temporary 3.17.1 daemon installed by the unmodified packaged public 0.2.2 helper was upgraded to the official 3.17.2 payload. An injected post-activation verification failure first restored the old archive identity, compatibility state and Bash hook; the old helper verified daemon readiness, then the real upgrade succeeded. The rollback now confirms the 3.17.1 downgrade guard with --allow-downgrade. Rerun with the built 0.2.3-rc.1 bundle as the new helper."
     },
     "host_reboot": {
       "status": "excluded-by-user",
@@ -45,7 +45,7 @@
   "client": {
     "os": "windows",
     "arch": "x64",
-    "version": "3.17.1",
+    "version": "3.17.2",
     "build": null,
     "host_bundle_sha256": null
   },
@@ -56,11 +56,11 @@
     "minimum_kernel": "3.10"
   },
   "source_server": {
-    "version": "3.17.1",
+    "version": "3.17.2",
     "target": "linux-x64",
-    "size_bytes": 91071879,
-    "sha256": "ec11bd918516d9468a0d746d00ff792a9521f345304190877d5e9d43131ca38d",
-    "url": "https://cdn-zcode.z.ai/zcode/electron/releases/3.17.1/zcode-server-linux-x64.tar.gz",
+    "size_bytes": 91085918,
+    "sha256": "88a41b337faa3f578a1fd68c1f28025fa0385a391eacfbac34b819653b8938e3",
+    "url": "https://cdn-zcode.z.ai/zcode/electron/releases/3.17.2/zcode-server-linux-x64.tar.gz",
     "executables": {
       "runtime/node": "8142d37c6f2f372ef040419e7a111a6baf17df89f8078d02447d6c639ae20c1d",
       "runtime/tools/bfs/bfs": "ffbcf14adc40645c2679434d137c8a2537fe8ffe826a62c5c95622c2de02c610",
@@ -79,10 +79,10 @@
     ]
   },
   "limitations": [
-    "Pin the desktop to ZCode 3.17.1; the probe contains no client version.",
+    "Pin the desktop to ZCode 3.17.2; the probe contains no client version.",
     "Preinstall and update using the remote helper, not the desktop installer.",
-    "The retained exact 3.16.2 probe fixture matches the previously supported command; the Windows 3.17.1 Host bundle has not been independently inspected.",
-    "Use tool 0.2.1 for the verified ZCode 3.16.3 workflow.",
+    "The retained exact 3.16.2 probe fixture matches the previously supported command; the Windows 3.17.2 Host bundle has not been independently inspected.",
+    "Use tool 0.2.2 for the verified ZCode 3.17.1 workflow.",
     "Host reboot was not tested and was explicitly excluded by the user; no reboot recovery guarantee is claimed."
   ],
   "probe_sha256": "f12e15e195c521c661b3aadc8ce0fac3a721489f06a35f7014bc0d45cd07c242",

@@ -1,7 +1,7 @@
 # zcode-server-centos7
 
 Run ZCode remote components on CentOS 7 with private runtime libraries.
-Release **0.2.2** supports **Windows x64 ZCode 3.17.1** connecting over SSH to
+Release **0.2.3** supports **Windows x64 ZCode 3.17.2** connecting over SSH to
 **CentOS 7 x86-64**. No root access is required; the Windows client remains
 unchanged. The tool bundle includes the private runtime.
 
@@ -21,20 +21,20 @@ Continue to the next command only after the previous one succeeds.
 Complete the remote installation before connecting from Windows.
 
 1. Download and verify the tool from the
-   [v0.2.2 release](https://github.com/KevinLYW366/zcode-server-centos7/releases/tag/v0.2.2):
+   [v0.2.3 release](https://github.com/KevinLYW366/zcode-server-centos7/releases/tag/v0.2.3):
 
    ```bash
-   curl -fLO https://github.com/KevinLYW366/zcode-server-centos7/releases/download/v0.2.2/zcode-server-centos7-0.2.2-zcode-3.17.1-x86_64.tar.gz
-   curl -fLO https://github.com/KevinLYW366/zcode-server-centos7/releases/download/v0.2.2/zcode-server-centos7-0.2.2-zcode-3.17.1-x86_64.tar.gz.sha256
-   sha256sum -c zcode-server-centos7-0.2.2-zcode-3.17.1-x86_64.tar.gz.sha256
-   tar -xzf zcode-server-centos7-0.2.2-zcode-3.17.1-x86_64.tar.gz
-   cd zcode-server-centos7-0.2.2
+   curl -fLO https://github.com/KevinLYW366/zcode-server-centos7/releases/download/v0.2.3/zcode-server-centos7-0.2.3-zcode-3.17.2-x86_64.tar.gz
+   curl -fLO https://github.com/KevinLYW366/zcode-server-centos7/releases/download/v0.2.3/zcode-server-centos7-0.2.3-zcode-3.17.2-x86_64.tar.gz.sha256
+   sha256sum -c zcode-server-centos7-0.2.3-zcode-3.17.2-x86_64.tar.gz.sha256
+   tar -xzf zcode-server-centos7-0.2.3-zcode-3.17.2-x86_64.tar.gz
+   cd zcode-server-centos7-0.2.3
    ```
 
 2. Download the official Source Server archive, then install and verify:
 
    ```bash
-   curl -fLO https://cdn-zcode.z.ai/zcode/electron/releases/3.17.1/zcode-server-linux-x64.tar.gz
+   curl -fLO https://cdn-zcode.z.ai/zcode/electron/releases/3.17.2/zcode-server-linux-x64.tar.gz
    bin/zcode-centos7 source-server install --archive "$PWD/zcode-server-linux-x64.tar.gz"
    bin/zcode-centos7 source-server verify
    bin/zcode-centos7 source-server status --json
@@ -46,11 +46,11 @@ Complete the remote installation before connecting from Windows.
    is unnecessary. Connect only after verification succeeds and status reports
    `"ready": true`.
 
-3. Open **ZCode 3.17.1** on Windows and connect over SSH with the same user.
+3. Open **ZCode 3.17.2** on Windows and connect over SSH with the same user.
 
 ## Upgrade and maintenance
 
-Run these commands from the unpacked **0.2.2** tool directory.
+Run these commands from the unpacked **0.2.3** tool directory.
 
 ### Upgrade or repair
 
@@ -64,7 +64,7 @@ bin/zcode-centos7 source-server verify
 bin/zcode-centos7 source-server status --json
 ```
 
-Reconnect from Windows **3.17.1** only after verification succeeds and status
+Reconnect from Windows **3.17.2** only after verification succeeds and status
 reports `"ready": true`. Repair refreshes the server, versioned state, and
 installed support files; replacing the tool files alone is insufficient.
 Stop on any failure and check recovery before retrying. Supported upgrade
@@ -94,7 +94,7 @@ does not stop server processes or roll back the server version.
 
 ## Limits
 
-- Keep the desktop pinned to **ZCode 3.17.1**. Other versions require separate
+- Keep the desktop pinned to **ZCode 3.17.2**. Other versions require separate
   validation; the SSH probe cannot identify the client version.
 - Install and update through the remote helper. Desktop-managed updates run
   an unpatched bootstrap Node that cannot start with CentOS 7's system libraries.
@@ -109,8 +109,9 @@ does not stop server processes or roll back the server version.
 
 - [Release notes](docs/RELEASE_NOTES.md)
 - [Upgrade policy and recovery guide](docs/UPGRADE_POLICY.md)
-- [ZCode 3.17.1 validation record](docs/ZCODE_3_17_1_COMPATIBILITY.md)
+- [ZCode 3.17.2 validation record](docs/ZCODE_3_17_2_COMPATIBILITY.md)
 - [Runtime source and build instructions](docs/USING_VSCODE_RUNTIME.md)
+- [ZCode 3.17.1 installation guide (v0.2.2)](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.2/README.md)
 - [ZCode 3.16.3 installation guide (v0.2.1)](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.1/README.md)
 - [ZCode 3.16.2 installation guide (v0.2.0)](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.0/README.md)
 - [Legacy 0.1.x guide](docs/LEGACY.md)

@@ -241,9 +241,9 @@ class SourceServer:
             terminal = ('const p=require(process.argv[1]).spawn("/bin/sh",["-c","printf pty-ok"],{env:process.env});'
                         'let text="";p.onData(x=>text+=x);p.onExit(e=>process.exit(e.exitCode===0&&text.includes("pty-ok")?0:1));'
                         'setTimeout(()=>{p.kill();process.exit(2)},5000).unref();')
-            # 3.17.1 ships @lydell/node-pty-linux-x64 whose package.json has
-            # "exports" but no "main", so directory-path require no longer
-            # resolves; require the entry file directly.
+            # 3.17.1 and 3.17.2 ship @lydell/node-pty-linux-x64 whose
+            # package.json has "exports" but no "main", so directory-path
+            # require no longer resolves; require the entry file directly.
             run([node, "-e", terminal, release_dir / "runtime/node_modules/node-pty/lib/index.js"], self.env)
         require(run([release_dir / "bin/zcode", "--version"], self.env) == self.release["version"], "Unexpected Server CLI version")
 
@@ -394,8 +394,13 @@ class SourceServer:
                         old_bootstrap = bootstrap / "rollback"
                         old_bootstrap.mkdir()
                         old_root = extract_archive(old_artifact, old_bootstrap)
-                        run([old_root / "bin/zcode", "update", "--from-archive", old_artifact,
-                             "--server-root", self.server, "--json"], self.env, timeout=180)
+                        rollback = [old_root / "bin/zcode", "update", "--from-archive", old_artifact,
+                                    "--server-root", self.server, "--json"]
+                        if tuple(int(part) for part in old["zcode_version"].split(".")) >= (3, 17, 1):
+                            # 3.17.1 added a downgrade guard; deliberate recovery to the
+                            # retained known-good release must confirm the downgrade.
+                            rollback.append("--allow-downgrade")
+                        run(rollback, self.env, timeout=180)
                     else:
                         raise ValueError("Live rollback needs a previously prepared compatible archive")
                 if previous_state is not None:

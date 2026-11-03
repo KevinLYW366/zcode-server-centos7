@@ -39,7 +39,7 @@ cp -- "${ROOT_DIR}/src/source_server.py" "${ROOT_DIR}/src/ssh_probe_hook.bash" \
     "${ROOT_DIR}/src/probe-3.16.2.sh" "${BUILD_DIR}/src/"
 cp -- "${ROOT_DIR}/docs/USING_VSCODE_RUNTIME.md" \
     "${ROOT_DIR}/docs/LEGACY.md" \
-    "${ROOT_DIR}/docs/ZCODE_3_17_1_COMPATIBILITY.md" \
+    "${ROOT_DIR}/docs/ZCODE_3_17_2_COMPATIBILITY.md" \
     "${ROOT_DIR}/docs/UPGRADE_POLICY.md" \
     "${ROOT_DIR}/docs/RELEASE_NOTES.md" "${BUILD_DIR}/docs/"
 cp -- "${ROOT_DIR}/docs/archive/LEGACY_DESIGN.md" \
