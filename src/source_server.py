@@ -235,8 +235,11 @@ class SourceServer:
         for relative in ("runtime/tools/bfs/bfs", "runtime/tools/ugrep/ugrep", "runtime/tools/ripgrep/rg"):
             run([release_dir / relative, "--version"], self.env)
         if native:
+            # 3.18.2 adds @napi-rs/keyring-linux-x64-gnu; it is dlopen'd by the
+            # patched Node like the other prebuilds and stays an unpatched ELF.
             for module in ("node-pty/prebuilds/linux-x64/pty.node", "koffi/build/koffi/linux_x64/koffi.node",
-                           "unsafe-pointer/prebuilds/linux-x64/unsafe-pointer.glibc.node"):
+                           "unsafe-pointer/prebuilds/linux-x64/unsafe-pointer.glibc.node",
+                           "@napi-rs/keyring-linux-x64-gnu/keyring.linux-x64-gnu.node"):
                 run([node, "-e", "require(process.argv[1])", release_dir / "runtime/node_modules" / module], self.env)
             terminal = ('const p=require(process.argv[1]).spawn("/bin/sh",["-c","printf pty-ok"],{env:process.env});'
                         'let text="";p.onData(x=>text+=x);p.onExit(e=>process.exit(e.exitCode===0&&text.includes("pty-ok")?0:1));'
@@ -364,8 +367,13 @@ class SourceServer:
         was_live = self.daemon_live()
         try:
             root = extract_archive(artifact, bootstrap)
+            # 3.18.2 requires remote credential storage: the core refuses to
+            # become ready without <root>/v2/credential-secret. Publishing it
+            # at update time keeps a live-upgrade core restart ready; the flag
+            # is the client's own update form and never overwrites an existing
+            # or explicitly configured secret.
             run([root / "bin/zcode", "update", "--from-archive", artifact,
-                 "--server-root", self.server, "--json"], self.env, timeout=180)
+                 "--prepare-credentials", "--server-root", self.server, "--json"], self.env, timeout=180)
             self.verify_record(record)
             record["status"] = "installed"
             write_json(self.state_path, record)
@@ -456,7 +464,10 @@ class SourceServer:
         self.verify_record(record)
         if self.args.handshake:
             # A caller must opt in because this can start a persistent daemon.
-            run([self.server / "bin/zcode", "serve", "--daemon", "--server-root", self.server, "--json"], self.env, timeout=60)
+            # --prepare-credentials matches the client's remote start command
+            # and recreates the 3.18.2 credential secret only when absent.
+            run([self.server / "bin/zcode", "serve", "--daemon", "--prepare-credentials",
+                 "--server-root", self.server, "--json"], self.env, timeout=60)
             status = json.loads(run([self.server / "bin/zcode", "status", "--server-root", self.server, "--json"], self.env))
             require(status.get("state") == "ready", "Source Server did not become ready")
         print("Source Server compatibility verified" + ("; daemon ready" if self.args.handshake else " (no daemon started)"))

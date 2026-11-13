@@ -9,13 +9,14 @@ automatic production update.
 
 ## 1. Current Baseline and Boundaries
 
-The **0.2.2** release supports Windows x64 ZCode
-**3.17.1** connecting to CentOS 7 x86-64 / kernel 3.10 / Bash SSH, using Source
-Server **3.17.1**. Tool **0.2.1** corresponds to ZCode **3.16.3**, and
+The **0.2.4** release supports Windows x64 ZCode
+**3.18.2** connecting to CentOS 7 x86-64 / kernel 3.10 / Bash SSH, using Source
+Server **3.18.2**. Tool **0.2.3** corresponds to ZCode **3.17.2**, **0.2.2** to
+ZCode **3.17.1**, **0.2.1** to ZCode **3.16.3**, and
 **0.2.0** to ZCode **3.16.2**; the historical fixed `server/node` layout uses
 **0.1.x**. Supported identities and evidence are recorded in each release's
 [compatibility.json](../compatibility.json) and
-[version-specific validation record](ZCODE_3_17_1_COMPATIBILITY.md). Do not claim
+[version-specific validation record](ZCODE_3_18_2_COMPATIBILITY.md). Do not claim
 support for an arbitrary version range.
 
 Keep installation under an ordinary user account, with a private runtime and a
@@ -227,11 +228,11 @@ verify, readiness, and desktop connectivity.
 
 ## 7. User Deployment and Recovery
 
-The verified stable upgrade source for `0.2.2` is tool `0.2.1` with ZCode
-3.16.3. Local, unpublished `0.3.0` and `0.3.0-rc.1` builds for ZCode 3.16.3
-also require repair to refresh the tool-versioned state and support
-files. This keeps the same server version; it is not a server downgrade.
-See the [3.17.1 validation record](ZCODE_3_17_1_COMPATIBILITY.md) for results.
+The verified stable upgrade source for `0.2.4` is tool `0.2.3` with ZCode
+3.17.2. Local, unpublished candidate builds (such as `0.2.4-rc.1`) for
+ZCode 3.18.2 also require repair to refresh the tool-versioned state and
+support files. This keeps the same server version; it is not a server downgrade.
+See the [3.18.2 validation record](ZCODE_3_18_2_COMPATIBILITY.md) for results.
 The `0.1.x` installation model requires its separate
 [legacy guide](LEGACY.md); this release does not claim a direct legacy upgrade.
 

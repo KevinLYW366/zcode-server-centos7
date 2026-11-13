@@ -205,9 +205,9 @@ class SourceServerTests(unittest.TestCase):
     def test_release_version_and_explicit_compatibility(self):
         actual = subprocess.check_output([str(ROOT / "bin/zcode-centos7"), "--version"]).decode().split()[1]
         self.assertEqual(actual, self.helper.meta["tool_version"])
-        self.assertEqual(self.helper.meta["candidate_zcode_versions"], ["3.17.2"])
-        self.assertEqual(self.helper.release["version"], "3.17.2")
-        self.assertEqual(self.helper.meta["end_to_end_verified_zcode_versions"], ["3.17.2"])
+        self.assertEqual(self.helper.meta["candidate_zcode_versions"], ["3.18.2"])
+        self.assertEqual(self.helper.release["version"], "3.18.2")
+        self.assertEqual(self.helper.meta["end_to_end_verified_zcode_versions"], ["3.18.2"])
         self.assertEqual(self.helper.meta["validation"]["windows_desktop_connection"]["status"],
                          "user-confirmed")
         self.assertEqual(self.helper.meta["validation"]["host_reboot"]["status"], "excluded-by-user")
