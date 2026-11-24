@@ -111,13 +111,13 @@ does not stop server processes or roll back the server version.
 - [Upgrade policy and recovery guide](docs/UPGRADE_POLICY.md)
 - [ZCode 4.0.0 validation record](docs/ZCODE_4_0_0_COMPATIBILITY.md)
 - [Runtime source and build instructions](docs/USING_VSCODE_RUNTIME.md)
-- [ZCode 3.19.1 installation guide (v0.2.5)](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.5/README.md)
-- [ZCode 3.18.2 installation guide (v0.2.4)](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.4/README.md)
-- [ZCode 3.17.2 installation guide (v0.2.3)](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.3/README.md)
-- [ZCode 3.17.1 installation guide (v0.2.2)](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.2/README.md)
-- [ZCode 3.16.3 installation guide (v0.2.1)](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.1/README.md)
-- [ZCode 3.16.2 installation guide (v0.2.0)](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.0/README.md)
 - [Legacy 0.1.x guide](docs/LEGACY.md)
+
+Older ZCode versions use an earlier tool release; the linked README is the installation guide for that version.
+
+| ZCode | 3.19.1 | 3.18.2 | 3.17.2 | 3.17.1 | 3.16.3 | 3.16.2 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Tool release | [v0.2.5](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.5/README.md) | [v0.2.4](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.4/README.md) | [v0.2.3](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.3/README.md) | [v0.2.2](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.2/README.md) | [v0.2.1](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.1/README.md) | [v0.2.0](https://github.com/KevinLYW366/zcode-server-centos7/blob/v0.2.0/README.md) |
 
 Inspired by [vscode-server-centos7](https://github.com/MikeWang000000/vscode-server-centos7).
 Project management code uses the [MIT License](LICENSE). Runtime components
