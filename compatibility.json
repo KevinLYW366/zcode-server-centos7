@@ -82,7 +82,7 @@
     "Pin the desktop to ZCode 4.0.0; the probe contains no client version.",
     "Preinstall and update using the remote helper, not the desktop installer.",
     "The retained exact 3.16.2 probe fixture matches the previously supported command; the Windows 4.0.0 Host bundle has not been independently inspected.",
-    "Use tool 0.2.5 for the verified ZCode 3.19.1 workflow, tool 0.2.4 for ZCode 3.18.2, tool 0.2.3 for ZCode 3.17.2, and tool 0.2.2 for ZCode 3.17.1.",
+    "Other ZCode versions need their matching earlier tool release: each 0.2.x release is titled with the ZCode version it supports, and the README maps versions to releases.",
     "Host reboot was not tested and was explicitly excluded by the user; no reboot recovery guarantee is claimed."
   ],
   "probe_sha256": "f12e15e195c521c661b3aadc8ce0fac3a721489f06a35f7014bc0d45cd07c242",

@@ -11,11 +11,10 @@ automatic production update.
 
 The **0.2.6** release supports Windows x64 ZCode
 **4.0.0** connecting to CentOS 7 x86-64 / kernel 3.10 / Bash SSH, using Source
-Server **4.0.0**. Tool **0.2.5** corresponds to ZCode **3.19.1**, **0.2.4** to
-ZCode **3.18.2**, **0.2.3** to ZCode **3.17.2**, **0.2.2** to ZCode **3.17.1**,
-**0.2.1** to ZCode **3.16.3**, and **0.2.0** to ZCode **3.16.2**; the historical
-fixed `server/node` layout uses
-**0.1.x**. Supported identities and evidence are recorded in each release's
+Server **4.0.0**. Each earlier tool release pins one earlier ZCode version; the
+[README version table](../README.md#documentation-and-previous-versions) maps
+them, and the historical fixed `server/node` layout uses **0.1.x**. Supported
+identities and evidence are recorded in each release's
 [compatibility.json](../compatibility.json) and
 [version-specific validation record](ZCODE_4_0_0_COMPATIBILITY.md). Do not claim
 support for an arbitrary version range.
@@ -207,7 +206,9 @@ verify, readiness, and desktop connectivity.
   version-specific validation record synchronized. Validation records preserve
   historical facts. Rewrite the README's existing quick start and maintenance
   instructions for the latest release instead of appending version-specific
-  tutorials. Link historical instructions through fixed tags or separate guides.
+  tutorials. Link historical instructions through fixed tags or separate guides,
+  adding one cell to the README version table per release instead of enumerating
+  older versions in the release notes, compatibility metadata, or this guide.
 - Record the supported combination, previous stable upgrade source, recovery
   conditions, missing evidence, and unverified items. Follow existing script
   checks for artifact names, Git tags, and tool versions. Include this guide and
